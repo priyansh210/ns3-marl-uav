@@ -1,0 +1,15 @@
+.DS_Store
+.venv
+.env
+
+# python build
+*.pyc
+__pycache__
+dist
+scenarios/
+
+.ipynb_checkpoints
+
+doc/doc
+doc/build
+doc/doxygen.log

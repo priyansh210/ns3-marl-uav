@@ -1,0 +1,128 @@
+default:
+  tags:
+    - docker
+
+stages:
+  - init
+  - lint+build
+  - test
+  - deploy
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  MYPY_CACHE_DIR: "$CI_PROJECT_DIR/.cache/mypy"
+  NS3_HOME: "$CI_PROJECT_DIR/source/ns-3.40"
+  DEVCONTAINER_IMAGE: $CI_REGISTRY/bp_defiance/bake-defiance:latest
+  CCACHE_BASEDIR_VALUE: ns-3-ccache-storage
+
+bootstrap:
+  stage: init
+  needs:
+    - project: bp_defiance/bake-defiance
+      job: build
+      ref: main
+      artifacts: true
+  image: $DEVCONTAINER_IMAGE
+  script:
+    - shopt -s extglob
+    - rm -r $NS3_HOME/contrib/defiance && mkdir $NS3_HOME/contrib/defiance && mv $CI_PROJECT_DIR/!(source|Makefile) $NS3_HOME/contrib/defiance/
+    - make bootstrap -o bakefile.xml -o bake/bake.py
+  artifacts:
+    paths:
+      - $NS3_HOME
+
+lint-cpp:
+  stage: lint+build
+  image: $DEVCONTAINER_IMAGE
+  script:
+    - cd $NS3_HOME
+    - python3 utils/check-style-clang-format.py contrib/defiance
+
+lint-python:
+  stage: lint+build
+  image: $DEVCONTAINER_IMAGE
+  before_script:
+    - cd $NS3_HOME/contrib/defiance
+    - poetry install --with dev,test
+    - source .venv/bin/activate
+  script:
+    - ruff check
+    - ruff format --check
+    - mypy --install-types --non-interactive
+  cache:
+    - key: pip-full
+      paths:
+        - .cache/pip
+    - key: mypy
+      paths:
+        - .cache/mypy
+
+build:
+  stage: lint+build
+  image: $DEVCONTAINER_IMAGE
+  script:
+    - mkdir -p $CCACHE_BASEDIR_VALUE
+    - export CCACHE_BASEDIR=$CI_PROJECT_DIR
+    - export CCACHE_DIR=$CI_PROJECT_DIR/$CCACHE_BASEDIR_VALUE
+    - export CCACHE_SLOPPINESS=pch_defines,time_macros
+    - cd $NS3_HOME
+    - ccache -s -v
+    - ./ns3 build
+    - ccache -s -v
+  cache:
+    - key: ccache
+      paths:
+        - $CCACHE_BASEDIR_VALUE/
+  artifacts:
+    paths:
+      - $NS3_HOME
+
+documentation:
+  stage: lint+build
+  dependencies:
+    - bootstrap
+  image: $DEVCONTAINER_IMAGE
+  script:
+    - mkdir -p $CI_PROJECT_DIR/public
+    - cd $NS3_HOME/contrib/defiance/doc
+    - doxygen doxygen.conf
+    - mv ./doc/html $CI_PROJECT_DIR/public/doxygen
+    - make html
+    - mv build/html/* $CI_PROJECT_DIR/public
+    - make latexpdf
+    - mv build/latex/*.pdf $CI_PROJECT_DIR/public
+  artifacts:
+    paths:
+      - public
+    when: always
+
+pages:
+  stage: deploy
+  dependencies:
+    - documentation
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  script:
+    - echo "Deploying the documentation"
+  artifacts:
+    paths:
+      - public
+
+test:
+  stage: test
+  dependencies:
+    - build
+  image: $DEVCONTAINER_IMAGE
+  before_script:
+    - cd $NS3_HOME/contrib/defiance
+    - poetry install --with test
+    - source .venv/bin/activate
+  script:
+    - NS3_HOME=$NS3_HOME
+    - cd $NS3_HOME
+    - ./contrib/defiance/test/run-python-tests.sh
+    - ./test.py -s "defiance*"
+  artifacts:
+    paths:
+      - testpy-output
+    when: always
