@@ -2,6 +2,8 @@
 
 Our project mainly builds upon the `ns3` network simulator, `ns3-ai` for ML integration.
 
+You can find the design documentation here: <https://DEFIANCE-project.github.io>
+
 ## Setup the development environment
 
 ### Installation with `bake`
