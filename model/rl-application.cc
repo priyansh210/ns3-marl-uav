@@ -72,12 +72,29 @@ RlApplication::SetDefaultAddress(Ipv4Address address)
 Ipv4Address
 RlApplication::GetDefaultAddress()
 {
+    if (m_defaultAddress == GetNode()->GetObject<Ipv4>()->GetAddress(0, 0).GetAddress())
+    { // if only loopback was available at setup check for better options
+      // without overriding non-loopback-address
+        if (GetNode()->GetObject<Ipv4>()->GetNInterfaces() >= 2)
+        {
+            return GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetAddress();
+        }
+    }
     return m_defaultAddress;
 }
 
 void
 RlApplication::Setup()
 {
+    // first interface should be loopback -> skip it if you can
+    if (GetNode()->GetObject<Ipv4>()->GetNInterfaces() >= 2)
+    {
+        SetDefaultAddress(GetNode()->GetObject<Ipv4>()->GetAddress(1, 0).GetAddress());
+    }
+    else
+    {
+        SetDefaultAddress(GetNode()->GetObject<Ipv4>()->GetAddress(0, 0).GetAddress());
+    }
 }
 
 uint

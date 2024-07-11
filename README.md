@@ -24,7 +24,7 @@ This repo comes with additional developer tools.
 
 In order to test ns3, it needs to be configured correctly. Refer to <https://github.com/DEFIANCE-project/bake-defiance> for a complete command suggestion.
 
-The ns3 testsuites in the `test` directory can be run with `./test.py -s <test-suite>`, e.g. `./test.py -s observation-app` for the `observation-app` testsuite in `/test/observation-application-test.cc`. For further information refer to <https://www.nsnam.org/docs/manual/html/how-to-write-tests.html>.
+The ns3 testsuites in the `test` directory can be run with `./test.py -s <test-suite>`, e.g. `./test.py -s defiance-agent-application` for the `defiance-agent-application` testsuite in `/test/agent-application-test.cc`. For further information refer to <https://www.nsnam.org/docs/manual/html/how-to-write-tests.html>.
 
 ## About the ns-defiance repository
 

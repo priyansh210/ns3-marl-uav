@@ -13,7 +13,7 @@ using namespace ns3;
 class SimpleMarlInterfaceTestSuite : public TestSuite
 {
   public:
-    SimpleMarlInterfaceTestSuite(std::string name = "marl-interface-test", Type type = UNIT);
+    SimpleMarlInterfaceTestSuite(std::string name = "marl-interface", Type type = UNIT);
 
   protected:
     void SetupCallbacks();
@@ -43,7 +43,6 @@ SimpleMarlInterfaceTestSuite::DoRun()
 {
     SetupCallbacks();
     std::vector<std::string> agentCycle{"agent1", "agent2", "agent3", "agent2", "agent1"};
-
     for (const auto& agent : agentCycle)
     {
         auto observation =
@@ -76,7 +75,7 @@ class EchoMarlInterfaceTestSuite : public SimpleMarlInterfaceTestSuite
 {
   public:
     EchoMarlInterfaceTestSuite()
-        : SimpleMarlInterfaceTestSuite("marl-echo-action-interface-test", UNIT)
+        : SimpleMarlInterfaceTestSuite("marl-echo-action-interface", UNIT)
     {
     }
 
@@ -98,7 +97,9 @@ class EchoMarlInterfaceTestSuite : public SimpleMarlInterfaceTestSuite
     void DoRun() override
     {
         SetupCallbacks();
-        SendNewAction(0, MakeBoxContainer<int>(12, 0.1));
+        SendNewAction(0,
+                      MakeBoxContainer<
+                          float>(12, 0.1, 0.2, 0.3, 0.1, 0.2, 0.3, 0.1, 0.2, 0.3, 0.1, 0.2, 0.3));
         Simulator::Run();
     };
 
@@ -115,15 +116,19 @@ EchoMarlInterfaceTestSuite::SendNewAction(int i, Ptr<OpenGymDataContainer> actio
     }
     auto agent = m_agents[i % 6];
     float reward = 1;
+    std::cout << "New action with i = " << i << " and action = ";
     switch (i % 2)
     {
-    case 1:
+    case 0:
+        std::cout << action->GetObject<OpenGymBoxContainer<float>>() << std::endl;
         reward = action->GetObject<OpenGymBoxContainer<float>>()->GetValue(0);
         break;
-    case 0:
+    case 1:
+        std::cout << action->GetObject<OpenGymBoxContainer<int>>() << std::endl;
         reward = action->GetObject<OpenGymBoxContainer<int>>()->GetValue(0);
         break;
     };
+    std::cout << "Reward = " << reward << std::endl;
     OpenGymMultiAgentInterface::Get()->NotifyCurrentState(
         agent,
         action,
@@ -240,7 +245,7 @@ class MarlAgentInterfaceTestSuite : public SimpleMarlInterfaceTestSuite
 {
   public:
     MarlAgentInterfaceTestSuite()
-        : SimpleMarlInterfaceTestSuite("marl-agent-interface-test", UNIT)
+        : SimpleMarlInterfaceTestSuite("marl-agent-interface", UNIT)
     {
     }
 

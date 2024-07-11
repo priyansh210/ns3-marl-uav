@@ -14,11 +14,11 @@ using namespace ns3;
  * Base test case class that unifies setup functionality for different tests.
  * This is not a full test case yet, actual tests need to inherit from it.
  */
-class ChannelInterfaceBaseTestCase : public TestCase
+class SimpleChannelInterfaceBaseTestCase : public TestCase
 {
   public:
-    ChannelInterfaceBaseTestCase(std::string name);
-    ~ChannelInterfaceBaseTestCase() override;
+    SimpleChannelInterfaceBaseTestCase(std::string name);
+    ~SimpleChannelInterfaceBaseTestCase() override;
 
   protected:
     void DoRun() override;
@@ -51,7 +51,7 @@ class ChannelInterfaceBaseTestCase : public TestCase
     }
 };
 
-ChannelInterfaceBaseTestCase::ChannelInterfaceBaseTestCase(std::string name)
+SimpleChannelInterfaceBaseTestCase::SimpleChannelInterfaceBaseTestCase(std::string name)
     : TestCase(name),
       m_nodes(2),
       m_devices(GetDevices(m_nodes)),
@@ -60,36 +60,37 @@ ChannelInterfaceBaseTestCase::ChannelInterfaceBaseTestCase(std::string name)
     Ipv4AddressGenerator::TestMode();
 }
 
-ChannelInterfaceBaseTestCase::~ChannelInterfaceBaseTestCase()
+SimpleChannelInterfaceBaseTestCase::~SimpleChannelInterfaceBaseTestCase()
 {
 }
 
 void
-ChannelInterfaceBaseTestCase::DoRun()
+SimpleChannelInterfaceBaseTestCase::DoRun()
 {
     Simulate();
 }
 
 /**
  * \ingroup defiance-tests
- * Test to check that the connection procedure between Simple Channel Interfaces works as expected.
+ * Test to check that the connection procedure between SimpleChannelInterfaces works as expected.
  */
-class SimpleInterfaceTestCase_Connect : public ChannelInterfaceBaseTestCase
+class SimpleChannelInterfaceConnectTestCase : public SimpleChannelInterfaceBaseTestCase
 {
   public:
-    SimpleInterfaceTestCase_Connect();
+    SimpleChannelInterfaceConnectTestCase();
 
   private:
     void Simulate() override;
 };
 
-SimpleInterfaceTestCase_Connect::SimpleInterfaceTestCase_Connect()
-    : ChannelInterfaceBaseTestCase("Check the connection procedure of the SimpleChannelInterface")
+SimpleChannelInterfaceConnectTestCase::SimpleChannelInterfaceConnectTestCase()
+    : SimpleChannelInterfaceBaseTestCase(
+          "Check the connection procedure of the SimpleChannelInterface")
 {
 }
 
 void
-SimpleInterfaceTestCase_Connect::Simulate()
+SimpleChannelInterfaceConnectTestCase::Simulate()
 {
     // Create the channel interfaces that we will use to test our connection routine
     auto simpleChannelInterfaceA = CreateObject<SimpleChannelInterface>();
@@ -250,32 +251,32 @@ SimpleInterfaceTestCase_Connect::Simulate()
 
 /**
  * \ingroup defiance-tests
- * Test to check that the connection procedure between Simple Channel Interfaces works as expected.
+ * Test to check that the connection procedure between SimpleChannelInterfaces works as expected.
  */
-class SimpleInterfaceTestCase_CorrectMessageReceived : public ChannelInterfaceBaseTestCase
+class SimpleChannelInterfaceReceiveTestCase : public SimpleChannelInterfaceBaseTestCase
 {
   public:
-    SimpleInterfaceTestCase_CorrectMessageReceived();
-    ~SimpleInterfaceTestCase_CorrectMessageReceived() override;
+    SimpleChannelInterfaceReceiveTestCase();
+    ~SimpleChannelInterfaceReceiveTestCase() override;
 
   private:
     void Simulate() override;
     void RecvCallback(std::string& string, Ptr<OpenGymDictContainer> msg);
 };
 
-SimpleInterfaceTestCase_CorrectMessageReceived::SimpleInterfaceTestCase_CorrectMessageReceived()
-    : ChannelInterfaceBaseTestCase(
+SimpleChannelInterfaceReceiveTestCase::SimpleChannelInterfaceReceiveTestCase()
+    : SimpleChannelInterfaceBaseTestCase(
           "Check that messages are correctly sent and received between simple channel interfaces")
 {
 }
 
-SimpleInterfaceTestCase_CorrectMessageReceived::~SimpleInterfaceTestCase_CorrectMessageReceived()
+SimpleChannelInterfaceReceiveTestCase::~SimpleChannelInterfaceReceiveTestCase()
 {
 }
 
 void
-SimpleInterfaceTestCase_CorrectMessageReceived::RecvCallback(std::string& string,
-                                                             Ptr<OpenGymDictContainer> msg)
+SimpleChannelInterfaceReceiveTestCase::RecvCallback(std::string& string,
+                                                    Ptr<OpenGymDictContainer> msg)
 {
     std::stringstream ss;
     msg->Print(ss);
@@ -283,7 +284,7 @@ SimpleInterfaceTestCase_CorrectMessageReceived::RecvCallback(std::string& string
 }
 
 void
-SimpleInterfaceTestCase_CorrectMessageReceived::Simulate()
+SimpleChannelInterfaceReceiveTestCase::Simulate()
 {
     Ptr<OpenGymDictContainer> msg1 = Create<OpenGymDictContainer>();
     Ptr<OpenGymBoxContainer<float>> box1 = Create<OpenGymBoxContainer<float>>();
@@ -307,15 +308,11 @@ SimpleInterfaceTestCase_CorrectMessageReceived::Simulate()
 
     auto simpleChannelInterfaceA = CreateObject<SimpleChannelInterface>();
     simpleChannelInterfaceA->AddRecvCallback(
-        MakeCallback(&SimpleInterfaceTestCase_CorrectMessageReceived::RecvCallback,
-                     this,
-                     resultAtA));
+        MakeCallback(&SimpleChannelInterfaceReceiveTestCase::RecvCallback, this, resultAtA));
 
     auto simpleChannelInterfaceB = CreateObject<SimpleChannelInterface>();
     simpleChannelInterfaceB->AddRecvCallback(
-        MakeCallback(&SimpleInterfaceTestCase_CorrectMessageReceived::RecvCallback,
-                     this,
-                     resultAtB));
+        MakeCallback(&SimpleChannelInterfaceReceiveTestCase::RecvCallback, this, resultAtB));
     simpleChannelInterfaceB->SetPropagationDelay(Seconds(2));
 
     auto simpleChannelInterfaceC = CreateObject<SimpleChannelInterface>();
@@ -344,20 +341,20 @@ SimpleInterfaceTestCase_CorrectMessageReceived::Simulate()
 /**
  * \ingroup defiance-tests
  *
- * \brief TestSuite for ChannelInterface
+ * \brief TestSuite for SimpleChannelInterface
  */
-class ChannelInterfaceTestSuite : public TestSuite
+class SimpleChannelInterfaceTestSuite : public TestSuite
 {
   public:
-    ChannelInterfaceTestSuite();
+    SimpleChannelInterfaceTestSuite();
 };
 
-ChannelInterfaceTestSuite::ChannelInterfaceTestSuite()
-    : TestSuite("defiance-simple-channel-interface-test", UNIT)
+SimpleChannelInterfaceTestSuite::SimpleChannelInterfaceTestSuite()
+    : TestSuite("defiance-simple-channel-interface", UNIT)
 {
-    AddTestCase(new SimpleInterfaceTestCase_Connect, TestCase::QUICK);
-    AddTestCase(new SimpleInterfaceTestCase_CorrectMessageReceived, TestCase::QUICK);
+    AddTestCase(new SimpleChannelInterfaceConnectTestCase, TestCase::QUICK);
+    AddTestCase(new SimpleChannelInterfaceReceiveTestCase, TestCase::QUICK);
 }
 
-static ChannelInterfaceTestSuite
-    sChannelInterfaceTestSuite; //!< Static variable for test initialization
+static SimpleChannelInterfaceTestSuite
+    sSimpleChannelInterfaceTestSuite; //!< Static variable for test initialization

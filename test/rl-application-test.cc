@@ -89,7 +89,7 @@ RlAppSendTestCase::Simulate()
     Simulator::Schedule(Seconds(5),
                         &CustomRlApp::SendData,
                         rlApp,
-                        MakeDictBoxContainer<float>(1, "floatObs", 42.0),
+                        MakeDictBoxContainer<float>(1, "floatData", 42.0),
                         m_sendingInterfaces);
 
     Simulator::Run();
@@ -141,13 +141,13 @@ RlAppStopTestCase::Simulate()
     Simulator::Schedule(Seconds(5),
                         &CustomRlApp::SendData,
                         rlApp,
-                        MakeDictBoxContainer<float>(1, "floatObs", 42.0),
+                        MakeDictBoxContainer<float>(1, "floatData", 42.0),
                         interface0);
     std::vector<Ptr<ChannelInterface>> interface2{m_sendingInterfaces[2]};
     Simulator::Schedule(Seconds(12),
                         &CustomRlApp::SendData,
                         rlApp,
-                        MakeDictBoxContainer<float>(1, "floatObs", 43.0),
+                        MakeDictBoxContainer<float>(1, "floatData", 43.0),
                         interface2);
 
     Simulator::Run();
@@ -169,7 +169,7 @@ class RlAppTestSuite : public TestSuite
 };
 
 RlAppTestSuite::RlAppTestSuite()
-    : TestSuite("defiance-rl-application-test", UNIT)
+    : TestSuite("defiance-rl-application", UNIT)
 {
     AddTestCase(new RlAppSendTestCase, TestCase::QUICK);
     AddTestCase(new RlAppStopTestCase, TestCase::QUICK);

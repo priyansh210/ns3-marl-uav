@@ -68,10 +68,12 @@ build_lib(
             ${python_libraries}
     TEST_SOURCES
             test/action-application-test.cc
+            test/agent-application-test.cc
             test/communication-test.cc
+            test/data-collector-application-test.cc
             test/history-container-test.cc
             test/marl-interface-test.cc
-            test/observation-application-test.cc
             test/rl-application-test.cc
             test/simple-channel-interface-test.cc
+            test/socket-channel-interface-test.cc
 )

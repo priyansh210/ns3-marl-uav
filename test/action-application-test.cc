@@ -4,54 +4,6 @@
 
 using namespace ns3;
 
-class TestActionApp : public ActionApplication
-{
-  public:
-    TestActionApp();
-    virtual ~TestActionApp();
-    /**
-     * \brief Get the type ID.
-     * \return the object TypeId.
-     */
-    static TypeId GetTypeId();
-    void ExecuteAction(uint remoteAppId, Ptr<OpenGymDictContainer> action) override;
-    std::map<uint, std::vector<float>> GetAction() const;
-
-  private:
-    std::map<uint, std::vector<float>> m_action;
-};
-
-TestActionApp::TestActionApp()
-{
-}
-
-TestActionApp::~TestActionApp()
-{
-}
-
-TypeId
-TestActionApp::GetTypeId()
-{
-    static TypeId tid = TypeId("ns3::TestActionApp")
-                            .SetParent<ActionApplication>()
-                            .SetGroupName("defiance")
-                            .AddConstructor<TestActionApp>();
-    return tid;
-}
-
-void
-TestActionApp::ExecuteAction(uint remoteAppId, Ptr<OpenGymDictContainer> action)
-{
-    auto value = action->Get("floatAct")->GetObject<OpenGymBoxContainer<float>>()->GetValue(0);
-    m_action[remoteAppId].emplace_back(value);
-}
-
-std::map<uint, std::vector<float>>
-TestActionApp::GetAction() const
-{
-    return m_action;
-}
-
 /**
  * \ingroup defiance-tests
  *
@@ -135,7 +87,7 @@ class ActionAppTestSuite : public TestSuite
 };
 
 ActionAppTestSuite::ActionAppTestSuite()
-    : TestSuite("defiance-action-application-test", UNIT)
+    : TestSuite("defiance-action-application", UNIT)
 {
     AddTestCase(new ActionAppTestCase, TestCase::QUICK);
 }

@@ -129,7 +129,7 @@ class CommunicationHelper : public Object
 
     /**
      * \brief Calls \c Setup() on all RlApplications registered in this helper.
-     * Should be called after all communications are set.
+     * Should be called after all RlApplications were set.
      */
     void Configure();
 

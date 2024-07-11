@@ -29,7 +29,7 @@ RlAppBaseTestCase::~RlAppBaseTestCase()
 void
 RlAppBaseTestCase::ReceiveData(int id, Ptr<OpenGymDictContainer> data)
 {
-    auto boxContainer = data->Get("floatObs")->GetObject<OpenGymBoxContainer<float>>();
+    auto boxContainer = data->Get("floatData")->GetObject<OpenGymBoxContainer<float>>();
     m_receivedData[id] = boxContainer->GetValue(0);
 }
 
@@ -73,6 +73,55 @@ RlAppBaseTestCase::DoRun()
     Simulate();
 }
 
+NS_OBJECT_ENSURE_REGISTERED(TestDataCollectorApp);
+
+TypeId
+TestDataCollectorApp::GetTypeId()
+{
+    static TypeId tid = TypeId("ns3::TestDataCollectorApp")
+                            .SetParent<DataCollectorApplication>()
+                            .SetGroupName("defiance")
+                            .AddConstructor<TestDataCollectorApp>();
+    return tid;
+}
+
+TestDataCollectorApp::TestDataCollectorApp()
+{
+}
+
+TestDataCollectorApp::~TestDataCollectorApp()
+{
+}
+
+void
+TestDataCollectorApp::ExecuteCallback(float arg, int arg2, int arg3)
+{
+    m_callback(arg, arg2, arg3);
+}
+
+void
+TestDataCollectorApp::CollectData(float data, int appId, int interfaceIndex)
+{
+    if (appId < 0)
+    {
+        Send(MakeDictBoxContainer<float>(1, "floatData", data));
+    }
+    else if (interfaceIndex < 0)
+    {
+        Send(MakeDictBoxContainer<float>(1, "floatData", data), appId);
+    }
+    else
+    {
+        Send(MakeDictBoxContainer<float>(1, "floatData", data), appId, interfaceIndex);
+    }
+}
+
+void
+TestDataCollectorApp::RegisterCallbacks()
+{
+    m_callback = MakeCallback(&TestDataCollectorApp::CollectData, this);
+}
+
 NS_OBJECT_ENSURE_REGISTERED(TestObservationApp);
 
 TypeId
@@ -104,15 +153,15 @@ TestObservationApp::Observe(float observation, int appId, int interfaceIndex)
 {
     if (appId < 0)
     {
-        Send(MakeDictBoxContainer<float>(1, "floatObs", observation));
+        Send(MakeDictBoxContainer<float>(1, "floatData", observation));
     }
     else if (interfaceIndex < 0)
     {
-        Send(MakeDictBoxContainer<float>(1, "floatObs", observation), appId);
+        Send(MakeDictBoxContainer<float>(1, "floatData", observation), appId);
     }
     else
     {
-        Send(MakeDictBoxContainer<float>(1, "floatObs", observation), appId, interfaceIndex);
+        Send(MakeDictBoxContainer<float>(1, "floatData", observation), appId, interfaceIndex);
     }
 }
 
@@ -120,6 +169,55 @@ void
 TestObservationApp::RegisterCallbacks()
 {
     m_callback = MakeCallback(&TestObservationApp::Observe, this);
+}
+
+NS_OBJECT_ENSURE_REGISTERED(TestRewardApp);
+
+TypeId
+TestRewardApp::GetTypeId()
+{
+    static TypeId tid = TypeId("ns3::TestRewardApp")
+                            .SetParent<RewardApplication>()
+                            .SetGroupName("defiance")
+                            .AddConstructor<TestRewardApp>();
+    return tid;
+}
+
+TestRewardApp::TestRewardApp()
+{
+}
+
+TestRewardApp::~TestRewardApp()
+{
+}
+
+void
+TestRewardApp::ExecuteCallback(float arg, int arg2, int arg3)
+{
+    m_callback(arg, arg2, arg3);
+}
+
+void
+TestRewardApp::Reward(float observation, int appId, int interfaceIndex)
+{
+    if (appId < 0)
+    {
+        Send(MakeDictBoxContainer<float>(1, "floatData", observation));
+    }
+    else if (interfaceIndex < 0)
+    {
+        Send(MakeDictBoxContainer<float>(1, "floatData", observation), appId);
+    }
+    else
+    {
+        Send(MakeDictBoxContainer<float>(1, "floatData", observation), appId, interfaceIndex);
+    }
+}
+
+void
+TestRewardApp::RegisterCallbacks()
+{
+    m_callback = MakeCallback(&TestRewardApp::Reward, this);
 }
 
 NS_OBJECT_ENSURE_REGISTERED(TestAgentApp);
@@ -134,21 +232,43 @@ TestAgentApp::GetTypeId()
     return tid;
 }
 
-std::map<uint, double>
-TestAgentApp::GetLatest() const
+std::map<uint, std::vector<float>>
+TestAgentApp::GetObservation() const
 {
-    return m_latest;
+    return m_observation;
+}
+
+std::map<uint, std::vector<float>>
+TestAgentApp::GetReward() const
+{
+    return m_reward;
+}
+
+std::map<uint, std::vector<float>>
+TestAgentApp::GetMessage() const
+{
+    return m_agentMessages;
 }
 
 void
 TestAgentApp::OnRecvObs(uint remoteAppId)
 {
-    m_latest[remoteAppId] = m_obsDataStruct.AggregateNewest(remoteAppId, 1)["floatObs"].GetAvg();
+    auto value = m_obsDataStruct.AggregateNewest(remoteAppId, 1)["floatData"].GetAvg();
+    m_observation[remoteAppId].emplace_back(value);
 }
 
 void
 TestAgentApp::OnRecvReward(uint remoteAppId)
 {
+    m_reward[remoteAppId].emplace_back(
+        m_rewardDataStruct.AggregateNewest(remoteAppId, 1)["floatData"].GetAvg());
+}
+
+void
+TestAgentApp::OnRecvFromAgent(uint remoteAppId, Ptr<OpenGymDictContainer> payload)
+{
+    auto boxContainer = DynamicCast<OpenGymBoxContainer<float>>(payload->Get("floatMessage"));
+    m_agentMessages[remoteAppId].emplace_back(boxContainer->GetValue(0));
 }
 
 Ptr<OpenGymSpace>
@@ -162,5 +282,38 @@ TestAgentApp::GetActionSpace()
 {
     return {};
 };
+
+NS_OBJECT_ENSURE_REGISTERED(TestActionApp);
+
+TestActionApp::TestActionApp()
+{
+}
+
+TestActionApp::~TestActionApp()
+{
+}
+
+TypeId
+TestActionApp::GetTypeId()
+{
+    static TypeId tid = TypeId("ns3::TestActionApp")
+                            .SetParent<ActionApplication>()
+                            .SetGroupName("defiance")
+                            .AddConstructor<TestActionApp>();
+    return tid;
+}
+
+void
+TestActionApp::ExecuteAction(uint remoteAppId, Ptr<OpenGymDictContainer> action)
+{
+    auto value = DynamicCast<OpenGymBoxContainer<float>>(action->Get("floatAct"))->GetValue(0);
+    m_action[remoteAppId].emplace_back(value);
+}
+
+std::map<uint, std::vector<float>>
+TestActionApp::GetAction() const
+{
+    return m_action;
+}
 
 } // namespace ns3
