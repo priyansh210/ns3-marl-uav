@@ -11,6 +11,7 @@ FIGURES = $(SOURCE)/figures
 # specify dia figures from which .png and .pdf figures need to be built
 
 IMAGES_DIA = \
+	$(FIGURES)/model-updates.dia
 #	$(FIGURES)/figure-name.dia
 
 
@@ -33,6 +34,10 @@ IMAGES_DOT = \
 
 
 IMAGES_NOBUILD = \
+	$(FIGURES)/channel-interfaces.png \
+	$(FIGURES)/complex-scenario.png \
+	$(FIGURES)/multiagent-interface.png \
+	$(FIGURES)/rlapplication-overview.png \
 #	$(FIGURES)/figure-name.png \
 
 

@@ -15,3 +15,8 @@ doc/build
 doc/doxygen.log
 
 utils/data/
+
+# force add if necessary; exclude compile output by default
+doc/source/figures/*.eps
+doc/source/figures/*.pdf
+doc/source/figures/*.png
