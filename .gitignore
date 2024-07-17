@@ -13,3 +13,5 @@ scenarios/
 doc/doc
 doc/build
 doc/doxygen.log
+
+utils/data/
