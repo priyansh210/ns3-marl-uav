@@ -117,6 +117,7 @@ test:
     - cd $NS3_HOME/contrib/defiance
     - poetry install --with test
     - source .venv/bin/activate
+    - pip install -e ../ai/python_utils -e ../ai/model/gym-interface/py
   script:
     - NS3_HOME=$NS3_HOME
     - cd $NS3_HOME

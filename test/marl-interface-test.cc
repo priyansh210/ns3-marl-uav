@@ -97,9 +97,7 @@ class EchoMarlInterfaceTestSuite : public SimpleMarlInterfaceTestSuite
     void DoRun() override
     {
         SetupCallbacks();
-        SendNewAction(0,
-                      MakeBoxContainer<
-                          float>(12, 0.1, 0.2, 0.3, 0.1, 0.2, 0.3, 0.1, 0.2, 0.3, 0.1, 0.2, 0.3));
+        SendNewAction(0, MakeBoxContainer<float>(12, 0.1));
         Simulator::Run();
     };
 
@@ -116,15 +114,13 @@ EchoMarlInterfaceTestSuite::SendNewAction(int i, Ptr<OpenGymDataContainer> actio
     }
     auto agent = m_agents[i % 6];
     float reward = 1;
-    std::cout << "New action with i = " << i << " and action = ";
+
     switch (i % 2)
     {
     case 0:
-        std::cout << action->GetObject<OpenGymBoxContainer<float>>() << std::endl;
         reward = action->GetObject<OpenGymBoxContainer<float>>()->GetValue(0);
         break;
     case 1:
-        std::cout << action->GetObject<OpenGymBoxContainer<int>>() << std::endl;
         reward = action->GetObject<OpenGymBoxContainer<int>>()->GetValue(0);
         break;
     };
@@ -155,7 +151,7 @@ TestObservation::RegisterCallbacks()
     for (int i = 1; i <= 10; i++)
     {
         Simulator::Schedule(
-            Seconds(i * 10),
+            Seconds(i),
             MakeCallback(*[](TestObservation* obs, Ptr<OpenGymDictContainer> container) {
                 obs->Send(container);
             }).Bind(this, MakeDictBoxContainer<float>(1, "floatObs", i)));
