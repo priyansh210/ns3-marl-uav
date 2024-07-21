@@ -14,6 +14,11 @@
 namespace ns3
 {
 
+/**
+ * \ingroup defiance
+ * \brief Common parameters used for communication between RlApplications over a
+ * ChannelInterface.
+ */
 struct CommunicationAttributes
 {
     Time delay{0}; //!< delay for arriving messages if using the SimpleChannelInterface
@@ -23,6 +28,11 @@ struct CommunicationAttributes
     virtual ~CommunicationAttributes() = default;
 };
 
+/**
+ * \ingroup defiance
+ * \brief CommunicationAttributes needed for information exchange over a
+ * SocketChannelInterface.
+ */
 struct SocketCommunicationAttributes : CommunicationAttributes
 {
     Ipv4Address clientAddress; //!< Address of client's NetDevice
@@ -40,6 +50,12 @@ struct SocketCommunicationAttributes : CommunicationAttributes
     TypeId protocol = UdpSocketFactory::GetTypeId(); //!< protocol to be used for the connection
 };
 
+/**
+ * \ingroup defiance
+ * \brief Hold information for constructing a ChannelInterface between two  RlApplications.
+ * Depending on the \c attributes, either a SimpleChannelInterface or a  SocketChannelInterface
+ * will be used.
+ */
 struct CommunicationPair
 {
     RlApplicationId clientId;                  //!< RlApplicationId that identifies client App

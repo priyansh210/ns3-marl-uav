@@ -1,4 +1,4 @@
-"""Program code for the `run-agent` cli program."""
+"""!Program code for the `run-agent` cli program."""
 
 import logging
 import sys
@@ -12,6 +12,8 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 class ParseKwargs(Action):
+    """!Parse key=value cli parameters into a dictionary."""
+
     @override
     def __call__(
         self,

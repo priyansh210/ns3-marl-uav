@@ -7,6 +7,12 @@
 
 namespace ns3
 {
+
+/**
+ * \ingroup defiance
+ * \class SumoMobComEnv
+ * \brief A MobComEnv with integration with SUMO - Simulation of Urban MObility
+ */
 class SumoMobComEnv : public StaticMobComEnv
 {
     /**

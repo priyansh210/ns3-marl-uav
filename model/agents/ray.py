@@ -1,4 +1,4 @@
-"""Agent leveraging ray to train an agent for a certain ns3 environment."""
+"""!Agent leveraging ray to train an agent for a certain ns3 environment."""
 
 import logging
 from collections import defaultdict
@@ -25,6 +25,8 @@ logger = logging.getLogger(__name__)
 
 
 class DefianceCallbacks(DefaultCallbacks):
+    """!Ray callbacks for multi-agent ns3-ai integration into tensorflow"""
+
     @override
     def on_episode_start(
         self,

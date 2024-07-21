@@ -8,6 +8,11 @@
 namespace ns3
 {
 
+/**
+ * \ingroup defiance
+ * \class StaticMobComEnv
+ * \brief MobComEnv with static eNodeBs and UEs
+ */
 class StaticMobComEnv : public MobComEnv
 {
   public:

@@ -14,6 +14,11 @@
 namespace ns3
 {
 
+/**
+ * \ingroup defiance
+ *
+ * \brief Single agent environment for training power control with reinforcement learning.
+ */
 class PowerControlMobComEnv : public MobComEnv
 {
   public:

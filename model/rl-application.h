@@ -23,6 +23,12 @@ enum ApplicationType
 
 std::string ApplicationTypeToString(ApplicationType type);
 
+/**
+ * \ingroup defiance
+ *
+ * \brief An unique identifier for every RlApplication.
+ * Used e.g. by the ChannelInterface to differentiate different RlApplications.
+ */
 struct RlApplicationId
 {
     ApplicationType applicationType; //!< Code for RL application type

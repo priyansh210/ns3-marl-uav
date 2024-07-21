@@ -1,4 +1,4 @@
-"""Agent leveraging ray to train a single agent for a certain ns3 environment."""
+"""!Agent leveraging ray to train a single agent for a certain ns3 environment."""
 
 import logging
 from typing import Any
@@ -19,6 +19,8 @@ logger = logging.getLogger(__name__)
 
 
 class SingleDefianceCallbacks(DefianceCallbacks):
+    """!Ray callbacks for ns3-ai integration into tensorflow"""
+
     @override
     def on_episode_step(self, *, episode: Episode, **kwargs: Any) -> None:
         info = episode.last_info_for() or {}
@@ -40,6 +42,7 @@ def start_training(
     load_checkpoint_path: str | None = None,
     **ns3_settings: str,
 ) -> None:
+    """!Start a ray training session with the given ns3-ai environment."""
     logger.info("Loading checkpoints is not supported for single agent: %s", load_checkpoint_path)
     env = TimeLimit(
         gym.make("ns3ai_gym_env/Ns3-v0", targetName=env_name, ns3Path=".", ns3Settings=ns3_settings),

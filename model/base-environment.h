@@ -18,8 +18,8 @@ class DeviceManager;
 /**
  * \ingroup defiance
  * \class MobComEnv
+ * \brief Environment specifically designed to train mobile communication related tasks.
  */
-
 class MobComEnv : public OpenGymEnv
 {
   public:
