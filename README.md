@@ -52,8 +52,8 @@ to [our devcontainer Dockerfile](https://github.com/DEFIANCE-project/bake-defian
 7. Manually install the ns3-ai message
    types: `pip install -e ./contrib/ai/python_utils -e ./contrib/ai/model/gym-interface/py`
 8. Compile everything with `./ns3 build`
-9. You are now able to start the training of our example scenario, such as `defiance-balance2.5`
-   with `run-agent train -n defiance-balance2.5`. See `run-agent --help` for more info.
+9. You are now able to start the training of our example scenario, such as `defiance-balance2`
+   with `run-agent train -n defiance-balance2`. See `run-agent --help` for more info.
 
 ### Development tools
 

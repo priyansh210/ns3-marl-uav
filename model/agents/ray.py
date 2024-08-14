@@ -101,7 +101,6 @@ def start_inference(env_name: str, load_checkpoint_path: str | Path, **ns3_setti
     agent, observation = only(reset[0].items())
     _, info = only(reset[1].items())
     terminated, truncated = False, False
-    time_running = 0.0
 
     while True:
         if "shared_policy" in policies:
@@ -123,13 +122,9 @@ def start_inference(env_name: str, load_checkpoint_path: str | Path, **ns3_setti
     if terminated:
         agent = only(states[0])
         observation, reward, terminated, truncated, info = (state[agent] for state in states)
-        time_running += float(info["terminateTime"])
-    else:
-        # Current simulation time is 5 seconds, should be automatically set
-        time_running += float(5)
+        logger.info("Average time running: %s", info["terminateTime"])
 
     env.close()
-    logger.info("Average time running: %s", time_running)
 
 
 def start_training(

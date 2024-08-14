@@ -8,9 +8,7 @@
 #include <ns3/observation-application.h>
 #include <ns3/pendulum-cart.h>
 #include <ns3/reward-application.h>
-#include <ns3/rl-application-helper.h>
 
-#include <algorithm>
 #include <math.h>
 #include <string>
 
@@ -53,12 +51,10 @@ class PendulumObservationApp : public ObservationApplication
                  double acceleration,
                  double nextAcceleration);
     void RegisterCallbacks() override;
+    void SendObservation(double delay);
 
   private:
-    float m_positionX{0};
-    float m_velocity{0};
-    float m_angle{0};
-    float m_angleVelocity{0};
+    Ptr<OpenGymDataContainer> m_observation = MakeBoxContainer<float>(4, 0, 0, 0, 0);
 };
 
 NS_OBJECT_ENSURE_REGISTERED(PendulumObservationApp);
@@ -85,9 +81,35 @@ PendulumObservationApp::Observe(uint32_t nodeId,
                                 double acceleration,
                                 double nextAcceleration)
 {
-    auto obs = MakeBoxContainer<float>(4, position.x, velocity, angle, angleVelocity);
+    m_observation = MakeBoxContainer<float>(4, position.x, velocity, angle, angleVelocity);
 
-    Send(MakeDictContainer("floatObs", obs));
+    if (std::abs(angle) > 0.418 || std::abs(position.x) > 4.8)
+    {
+        auto terminateTime = Simulator::Now().GetSeconds();
+        std::map<std::string, std::string> terminateInfo = {
+            {std::string{"terminateTime"}, std::to_string(terminateTime)}};
+        for (const auto& [agentId, agentInterface] : m_interfaces)
+        {
+            std::string agentIdString = "agent_" + std::to_string(agentId);
+            NS_LOG_WARN("Terminate agent " << agentIdString << "! Time: " << terminateTime
+                                           << " | angle: " << angle
+                                           << " | position: " << position.x);
+            OpenGymMultiAgentInterface::Get()->NotifyCurrentState(agentIdString,
+                                                                  m_observation,
+                                                                  -1,
+                                                                  true,
+                                                                  terminateInfo,
+                                                                  Seconds(0),
+                                                                  noopCallback);
+        }
+    }
+}
+
+void
+PendulumObservationApp::SendObservation(double delay)
+{
+    Send(MakeDictContainer("floatObs", m_observation));
+    Simulator::Schedule(Seconds(delay), &PendulumObservationApp::SendObservation, this, delay);
 }
 
 void
@@ -161,11 +183,9 @@ class InferenceAgentApp : public AgentApplication
 {
   public:
     InferenceAgentApp()
-        : AgentApplication()
-    {
-        m_reward = 0;
-        m_observation = MakeBoxContainer<float>(4, 0, 0, 0, 0);
-    };
+        : AgentApplication(){
+
+          };
 
     ~InferenceAgentApp() override{};
 
@@ -173,7 +193,34 @@ class InferenceAgentApp : public AgentApplication
 
     void PerformInferenceStep()
     {
-        InferAction();
+        for (const auto& [appId, interface] : m_observationInterfaces)
+        {
+            // use observation for current cart
+            if (m_obsDataStruct.HistoryExists(appId))
+            {
+                m_observation = m_obsDataStruct.GetNewestByID(appId)
+                                    ->data->Get("floatObs")
+                                    ->GetObject<OpenGymBoxContainer<float>>();
+            }
+            else
+            {
+                m_observation = MakeBoxContainer<float>(4, 0, 0, 0, 0);
+            }
+            // use reward for current cart
+            if (m_rewardDataStruct.HistoryExists(appId))
+            {
+                m_reward = m_rewardDataStruct.GetNewestByID(appId)
+                               ->data->Get("reward")
+                               ->GetObject<OpenGymBoxContainer<float>>()
+                               ->GetValue(0);
+            }
+            else
+            {
+                m_reward = 0;
+            }
+            // set id to sent action to corresponding ActionApp
+            InferAction(appId);
+        }
         Simulator::Schedule(m_stepTime, &InferenceAgentApp::PerformInferenceStep, this);
     }
 
@@ -200,37 +247,13 @@ class InferenceAgentApp : public AgentApplication
 
     void OnRecvObs(uint id) override
     {
-        // reward is calculated often, so we can assume that M_reward is the "current" reward
-        // already
-        auto obs = m_obsDataStruct.GetNewestByID(0)
-                       ->data->Get("floatObs")
-                       ->GetObject<OpenGymBoxContainer<float>>();
-        m_observation = obs;
-        float angle = obs->GetValue(3);
-        if (std::abs(angle) > 0.418 || std::abs(angle) > 4.8)
-        {
-            auto terminateTime = Simulator::Now().GetSeconds();
-            std::map<std::string, std::string> terminateInfo = {
-                {std::string{"terminateTime"}, std::to_string(terminateTime)}};
-            NS_LOG_WARN("Terminate! time: " << terminateTime << " angle: " << angle);
-            OpenGymMultiAgentInterface::Get()->NotifyCurrentState("agent_0",
-                                                                  obs,
-                                                                  -1,
-                                                                  true,
-                                                                  terminateInfo,
-                                                                  Seconds(0),
-                                                                  noopCallback);
-        }
-
-        // check if the episode is terminated
+        auto observation = m_obsDataStruct.GetNewestByID(id)
+                               ->data->Get("floatObs")
+                               ->GetObject<OpenGymBoxContainer<float>>();
     }
 
     void OnRecvReward(uint id) override
     {
-        m_reward = m_rewardDataStruct.GetNewestByID(0)
-                       ->data->Get("reward")
-                       ->GetObject<OpenGymBoxContainer<float>>()
-                       ->GetValue(0);
     }
 
     Ptr<OpenGymDataContainer> GetResetObservation()
@@ -300,42 +323,60 @@ NS_OBJECT_ENSURE_REGISTERED(InferenceAgentApp);
 int
 main(int argc, char* argv[])
 {
-    NS_LOG_APPEND_TIME_PREFIX;
-    // LogComponentEnable("SocketChannelInterface", ns3::LOG_LEVEL_ALL);
-    // LogComponentEnable("EnvironmentCreator", ns3::LOG_LEVEL_ALL);
-    // LogComponentEnable("Socket", ns3::LOG_LEVEL_ALL);
+    LogComponentEnable("BalanceScenario2", LOG_LEVEL_ALL);
+
+    int offset = 1;
 
     // first of all we need to parse the command line arguments
     std::string interfaceType = "SIMPLE"; // use simple channel interface per default
     bool visualize = false;
 
+    // multiple agents and carts are only supported with SimpleChannelInterfaces
+    uint32_t seed = 1;
+    uint32_t runId = 1;
+    uint agentNum = 1;
+    uint cartsPerAgent = 1;
+
     CommandLine cmd;
-    cmd.AddValue("visualize", "Log visualization traces", visualize);
+    cmd.AddValue("seed", "Seed to create comparable scenarios", seed);
+    cmd.AddValue("runId", "Run ID. Is increased for every reset of the environment", runId);
     cmd.AddValue("interfaceType", "The type of the channel interface to use", interfaceType);
+    cmd.AddValue("numberOfAgents",
+                 "The number of agents and base stations used in the simulation",
+                 agentNum);
+    cmd.AddValue("cartsPerAgent", "The number of carts per agent or base station", cartsPerAgent);
+    cmd.AddValue("visualize", "Log visualization traces", visualize);
     cmd.Parse(argc, argv);
 
-    LogComponentEnable("BalanceScenario2", LOG_LEVEL_ALL);
-    auto environmentCreator = EnvironmentCreator();
-    environmentCreator.SetupPendulumScenario(1, 1, false);
+    RngSeedManager::SetSeed(seed);
+    RngSeedManager::SetRun(runId);
 
-    auto cartNode = environmentCreator.GetCartNodes().Get(0);
-    auto enbNode = environmentCreator.GetEnbNodes().Get(0);
-    auto inferenceAgentNode = environmentCreator.GetInferenceAgentNodes().Get(0);
+    if (interfaceType != "SIMPLE" && (agentNum != 1 || cartsPerAgent != 1))
+    {
+        NS_FATAL_ERROR("numberOfAgents and cartsPerAgent are currently only supported with "
+                       "SimpleChannelInterface");
+    }
+
+    auto environmentCreator = EnvironmentCreator();
+    environmentCreator.SetupPendulumScenario(agentNum * cartsPerAgent, agentNum, false);
+
+    auto cartNodes = environmentCreator.GetCartNodes();
+    auto enbNodes = environmentCreator.GetEnbNodes();
+    auto inferenceAgentNodes = environmentCreator.GetInferenceAgentNodes();
 
     RlApplicationHelper helper(TypeId::LookupByName("ns3::PendulumObservationApp"));
     helper.SetAttribute("StartTime", TimeValue(Seconds(0)));
-    helper.SetAttribute("StopTime", TimeValue(Seconds(10)));
-    RlApplicationContainer observationApps = helper.Install(cartNode);
+    helper.SetAttribute("StopTime", TimeValue(Seconds(offset + 10)));
+    RlApplicationContainer observationApps = helper.Install(cartNodes);
 
     helper.SetTypeId("ns3::PendulumRewardApp");
-    RlApplicationContainer rewardApps = helper.Install(cartNode);
+    RlApplicationContainer rewardApps = helper.Install(cartNodes);
 
     helper.SetTypeId("ns3::PendulumActionApp");
-    RlApplicationContainer actionApps = helper.Install(cartNode);
+    RlApplicationContainer actionApps = helper.Install(cartNodes);
 
     helper.SetTypeId("ns3::InferenceAgentApp");
-    // Config::Set("InferenceAgentApp", const AttributeValue &value)
-    RlApplicationContainer agentApps = helper.Install(inferenceAgentNode);
+    RlApplicationContainer agentApps = helper.Install(inferenceAgentNodes);
 
     CommunicationHelper commHelper = CommunicationHelper();
 
@@ -345,68 +386,102 @@ main(int argc, char* argv[])
     commHelper.SetActionApps(actionApps);
     commHelper.SetIds();
 
+    std::vector<CommunicationPair> adjacency = {};
+
+    // add communications depending on what run type is chosen
     if (interfaceType == "SIMPLE")
     {
-        commHelper.AddCommunication(
-            {{observationApps.GetId(0), agentApps.GetId(0), {}},
-             {rewardApps.GetId(0), agentApps.GetId(0), CommunicationAttributes{Seconds(0)}},
-             {agentApps.GetId(0), actionApps.GetId(0), {}}});
+        for (uint i = 0; i < inferenceAgentNodes.GetN(); i++)
+        {
+            for (uint j = 0; j < cartsPerAgent; j++)
+            {
+                uint cartId = i * cartsPerAgent + j;
+                CommunicationPair observationCommPair = {observationApps.GetId(cartId),
+                                                         agentApps.GetId(i),
+                                                         {}};
+                CommunicationPair rewardCommPair = {rewardApps.GetId(cartId),
+                                                    agentApps.GetId(i),
+                                                    {}};
+                CommunicationPair actionCommPair = {actionApps.GetId(cartId),
+                                                    agentApps.GetId(i),
+                                                    {}};
+                adjacency.emplace_back(observationCommPair);
+                adjacency.emplace_back(rewardCommPair);
+                adjacency.emplace_back(actionCommPair);
+            }
+        }
     }
-    else if (interfaceType == "UDP")
+    if (interfaceType == "UDP")
     {
-        commHelper.AddCommunication(
-            {{observationApps.GetId(0),
-              agentApps.GetId(0),
-              SocketCommunicationAttributes{"7.0.0.2", "1.0.0.2", UdpSocketFactory::GetTypeId()}},
-             {rewardApps.GetId(0), agentApps.GetId(0), CommunicationAttributes{Seconds(0)}},
-             {agentApps.GetId(0),
-              actionApps.GetId(0),
-              SocketCommunicationAttributes{"1.0.0.2", "7.0.0.2", UdpSocketFactory::GetTypeId()}}});
+        CommunicationPair observationCommPair = {
+            observationApps.GetId(0),
+            agentApps.GetId(0),
+            SocketCommunicationAttributes{"7.0.0.2", "1.0.0.2", UdpSocketFactory::GetTypeId()}};
+        CommunicationPair rewardCommPair = {rewardApps.GetId(0), agentApps.GetId(0), {}};
+        CommunicationPair actionCommPair = {
+            actionApps.GetId(0),
+            agentApps.GetId(0),
+            SocketCommunicationAttributes{"7.0.0.2", "1.0.0.2", UdpSocketFactory::GetTypeId()}};
+        adjacency.emplace_back(observationCommPair);
+        adjacency.emplace_back(rewardCommPair);
+        adjacency.emplace_back(actionCommPair);
     }
-    else if (interfaceType == "TCP")
+    if (interfaceType == "TCP")
     {
-        commHelper.AddCommunication(
-            {{observationApps.GetId(0),
-              agentApps.GetId(0),
-              SocketCommunicationAttributes{"7.0.0.2", "1.0.0.2", TcpSocketFactory::GetTypeId()}},
-             {rewardApps.GetId(0), agentApps.GetId(0), CommunicationAttributes{Seconds(0)}},
-             {agentApps.GetId(0),
-              actionApps.GetId(0),
-              SocketCommunicationAttributes{"1.0.0.2", "7.0.0.2", TcpSocketFactory::GetTypeId()}}});
+        CommunicationPair observationCommPair = {
+            observationApps.GetId(0),
+            agentApps.GetId(0),
+            SocketCommunicationAttributes{"7.0.0.2", "1.0.0.2", TcpSocketFactory::GetTypeId()}};
+        CommunicationPair rewardCommPair = {rewardApps.GetId(0), agentApps.GetId(0), {}};
+        CommunicationPair actionCommPair = {
+            actionApps.GetId(0),
+            agentApps.GetId(0),
+            SocketCommunicationAttributes{"7.0.0.2", "1.0.0.2", TcpSocketFactory::GetTypeId()}};
+        adjacency.emplace_back(observationCommPair);
+        adjacency.emplace_back(rewardCommPair);
+        adjacency.emplace_back(actionCommPair);
     }
 
+    commHelper.AddCommunication(adjacency);
     commHelper.Configure();
 
-    DynamicCast<PendulumActionApp>(actionApps.Get(0))
-        ->SetObservationApp(DynamicCast<PendulumObservationApp>(observationApps.Get(0)));
+    for (uint i = 0; i < cartNodes.GetN(); i++)
+    {
+        DynamicCast<PendulumActionApp>(actionApps.Get(i))
+            ->SetObservationApp(DynamicCast<PendulumObservationApp>(observationApps.Get(i)));
+    }
 
-    // AnimationInterface anim("balance2-scenario-animation.xml");
+    for (uint i = 0; i < observationApps.GetN(); i++)
+    {
+        Simulator::Schedule(Seconds(offset),
+                            &PendulumObservationApp::SendObservation,
+                            DynamicCast<PendulumObservationApp>(observationApps.Get(i)),
+                            0.01);
+    }
 
-    // anim.SetMobilityPollInterval(Seconds(0.25));
-    // anim.SetMaxPktsPerTraceFile(100000);
-    // anim.UpdateNodeDescription(cartNode, "cart");
-    // anim.UpdateNodeColor(cartNode, 0, 0, 255);
-    // anim.UpdateNodeDescription(enbNode, "eNB");
-    // anim.UpdateNodeColor(enbNode, 0, 255, 0);
-    // anim.UpdateNodeDescription(inferenceAgentNode, "inferenceAgent");
-    // anim.UpdateNodeColor(inferenceAgentNode, 255, 255, 0);
-    // anim.EnablePacketMetadata(true);
-
-    Simulator::Schedule(Seconds(0),
-                        &InferenceAgentApp::PerformInferenceStep,
-                        DynamicCast<InferenceAgentApp>(agentApps.Get(0)));
+    for (uint i = 0; i < agentApps.GetN(); i++)
+    {
+        Simulator::Schedule(Seconds(offset + 0.001),
+                            &InferenceAgentApp::PerformInferenceStep,
+                            DynamicCast<InferenceAgentApp>(agentApps.Get(i)));
+    }
 
     std::string pathToNs3 = std::getenv("NS3_HOME");
     std::ofstream stats_file(pathToNs3 + "/stats.csv", std::ios_base::app);
     if (visualize)
     {
         Ptr<OutputStreamWrapper> stats_file_ptr = Create<OutputStreamWrapper>(&stats_file);
-        DynamicCast<PendulumCart>(cartNode)->m_reportCarStatsTrace.ConnectWithoutContext(
-            MakeBoundCallback(&SaveStats, stats_file_ptr));
+        for (uint i = 0; i < cartNodes.GetN(); i++)
+        {
+            DynamicCast<PendulumCart>(cartNodes.Get(i))
+                ->m_reportCarStatsTrace.ConnectWithoutContext(
+                    MakeBoundCallback(&SaveStats, stats_file_ptr));
+        }
     }
 
-    Simulator::Stop(Seconds(10));
+    Simulator::Stop(Seconds(5 + offset));
     Simulator::Run();
+
     OpenGymMultiAgentInterface::Get()->NotifySimulationEnd();
 
     return 0;

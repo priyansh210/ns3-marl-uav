@@ -69,6 +69,9 @@ arg_parser.add_argument(
 
 ns = arg_parser.parse_args()
 
+if "runId" in ns.ns3_settings:
+    ns.ns3_settings["runId"] = int(ns.ns3_settings["runId"])
+
 match ns.type:
     case "debug" | "random":
         if not ns.single:

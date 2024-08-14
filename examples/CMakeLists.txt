@@ -63,6 +63,7 @@ build_lib_example(
         SOURCE_FILES scenario/balance1-scenario.cc
         LIBRARIES_TO_LINK
                 ${libdefiance}
+                ${libnetanim}
 )
 
 build_lib_example(
@@ -71,21 +72,6 @@ build_lib_example(
         LIBRARIES_TO_LINK
                 ${libdefiance}
                 ${libnetanim}
-)
-
-build_lib_example(
-        NAME defiance-balance2.5
-        SOURCE_FILES scenario/balance2.5-scenario.cc
-        LIBRARIES_TO_LINK
-                ${libdefiance}
-                ${libnetanim}
-)
-
-build_lib_example(
-        NAME defiance-balance3
-        SOURCE_FILES scenario/balance3-scenario.cc
-        LIBRARIES_TO_LINK
-                ${libdefiance}
 )
 
 build_lib_example(
