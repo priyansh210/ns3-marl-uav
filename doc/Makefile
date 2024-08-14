@@ -36,6 +36,7 @@ IMAGES_DOT = \
 IMAGES_NOBUILD = \
 	$(FIGURES)/channel-interfaces.png \
 	$(FIGURES)/complex-scenario.png \
+	$(FIGURES)/defiance-classes.png \
 	$(FIGURES)/multiagent-interface.png \
 	$(FIGURES)/rlapplication-overview.png \
 #	$(FIGURES)/figure-name.png \

@@ -1,4 +1,3 @@
-.. include:: replace.txt
 .. highlight:: cpp
 
 ++++++++++++++++++++
@@ -19,7 +18,7 @@ deployment and the communication between them. Typical RL tasks include
 agents, actions, observations and rewards as their main components. In a
 network, these components are often placed on different nodes. For example,
 collecting observations and training an agent often happen at different
-locations in the network. To associate these RL components with :code:`Nodes`,
+locations in the network. To associate these RL components with :code:`Node`\ s,
 the abstraction of user applications is used. The following
 applications inherit from a general :code:`RlApplication`:
 
@@ -40,12 +39,12 @@ applications inherit from a general :code:`RlApplication`:
 .. figure:: figures/rlapplication-overview.*
    :align: center
 
-   Basic interaction of :code:`RlApplications`
+   Basic interaction of :code:`RlApplication`\ s
 
 A commonly used standard for implementing RL environments is the
 Gymnasium standard [Gymnasium]_, which is based on Python. With RLLib (Ray) [RLLib]_ an
 extensive Python library for RL exists that uses this standard as an
-interface for single-agent training. As |ns3| is implemented in C++, a
+interface for single-agent training. As *ns-3* is implemented in C++, a
 connection with the mainly Python-based RL frameworks needs to be
 established. This module uses *ns3-ai* [ns3-ai]_ for the inter-process communication.
 
@@ -74,7 +73,7 @@ Possible use cases this module is designed for are the following:
 To make these generalized use cases possible, the following main
 requirements have been considered:
 
- #. Support integration with existing |ns3| scenarios with as few
+ #. Support integration with existing *ns-3* scenarios with as few
     assumptions about the scenario as possible (even complex scenarios
     such as :ref:`fig-complex-scenario` should be supported)
 
@@ -84,42 +83,52 @@ requirements have been considered:
     traffic
 
 
+Class diagram
+*************
+
+The following class diagram includes all classes provided by DEFIANCE. You can also find member variables and class methods that are particularly important.
+
+.. _fig-class-diagram:
+.. figure:: figures/defiance-classes.*
+   :align: center
+
+
 Customization
 -------------
 
 This module provides a framework to simulate different RL components by different
-:code:`RlApplications`. The main tasks that the framework performs for the user in
+:code:`RlApplication`\ s. The main tasks that the framework performs for the user in
 order to make it well usable are the following:
 
- * provide frameworks for prototypical :code:`RlApplications`,
+ * provide frameworks for prototypical :code:`RlApplication`\ s,
 
- * provide helper functionality to support creation of :code:`RlApplications` and
-   their installation on :code:`Nodes`,
+ * provide helper functionality to support creation of :code:`RlApplication`\ s and
+   their installation on :code:`Node`\ s,
 
- * enable typical communication between :code:`RlApplications`, and
+ * enable typical communication between :code:`RlApplication`\ s, and
 
- * handle the interaction between :code:`RlApplications` and the Python-based
+ * handle the interaction between :code:`RlApplication`\ s and the Python-based
    training/inference processes in compliance with the typical RL workflow.
 
 In addition to these tasks performed by the framework, some aspects of the
-:code:`RlApplications` strongly depend on the specific RL task and solution
+:code:`RlApplication`\ s strongly depend on the specific RL task and solution
 approach that is to be implemented. Therefore, custom code provided by the user
-of the framework has to be integrated into the :code:`RlApplications`. Typically,
-this mainly concerns the following aspects of :code:`RlApplications`:
+of the framework has to be integrated into the :code:`RlApplication`\ s. Typically,
+this mainly concerns the following aspects of :code:`RlApplication`\ s:
 
  * Data collection: How are observations and rewards collected/calculated exactly?
 
- * Communication between :code:`RlApplications`: When and to whom are messages sent?
+ * Communication between :code:`RlApplication`\ s: When and to whom are messages sent?
 
  * Behavior of agents: At what frequency does the agent step? What triggers a step?
 
  * Execution of actions: What happens exactly when a specific action occurs?
 
 A typical example of necessary customization is an :code:`ObservationApplication`
-which should be registered at a specific |ns3| trace source to provide it with the
+which should be registered at a specific *ns-3* trace source to provide it with the
 necessary data. The according trace source and its signature have to be
 configurable as they depend on the specific scenario. Additionally it should
-be configurable to which :code:`AgentApplications` the collected data is sent.
+be configurable to which :code:`AgentApplication`\ s the collected data is sent.
 
 One option to solve this task are callbacks: The user could create
 functions outside the according :code:`RlApplication` with a distinct interface.
@@ -133,7 +142,7 @@ flexible as all function signatures have to be fixed and known already when the
 of this approach is that there is no defined location for the custom
 code of an :code:`RlApplication`.
 
-Therefore, an approach using inheritance was chosen: The :code:`RlApplications`
+Therefore, an approach using inheritance was chosen: The :code:`RlApplication`\ s
 are designed as abstract classes from which the user has to inherit in
 order to add the scenario-specific code. This has the advantage that all
 code connected to an :code:`RlApplication` is collected in a single class.
@@ -145,9 +154,9 @@ customized.
 ChannelInterface
 ----------------
 
-This framework is supposed to allow communication between :code:`RlApplications` in a
+This framework is supposed to allow communication between :code:`RlApplication`\ s in a
 custom scenario. Therefore, it is the task of the framework user to set
-up the scenario and the communication channels between :code:`Nodes`. This implies
+up the scenario and the communication channels between :code:`Node`\ s. This implies
 that the user has to provide the framework with an abstraction of a
 pre-configured channel over which data can be sent. Intuitively, this
 would be sockets. Nevertheless, the framework should prevent the user
@@ -156,14 +165,14 @@ IP addresses and the type of protocol as data the user has to
 provide. Using this data, sockets can be created and connected to each
 other.
 
-:code:`RlApplications` should handle the interfaces of their communication channels
+:code:`RlApplication`\ s should handle the interfaces of their communication channels
 transparently, e.g. independent from the protocol type. Additionally,
 direct communication without simulated network traffic should be possible.
 To this end, the :code:`ChannelInterface` class was introduced as a generalized
-interface used in :code:`RlApplications`. It is subclassed by the
+interface used in :code:`RlApplication`\ s. It is subclassed by the
 :code:`SocketChannelInterface` class, which is responsible for creating sockets
 when provided with the necessary information (IP addresses and protocol
-type). The :code:`SimpleChannelInterface` provides the :code:`RlApplications` with the
+type). The :code:`SimpleChannelInterface` provides the :code:`RlApplication`\ s with the
 same interface while maintaining a direct reference to another
 :code:`SimpleChannelInterface` to allow communication with a fixed delay (which
 might also be 0).
@@ -175,10 +184,10 @@ might also be 0).
    Communication via :code:`SimpleChannelInterface` and :code:`SocketChannelInterface`
 
 It should be noted that the framework should support multiple connections
-over :code:`ChannelInterfaces` between a single pair of :code:`RlApplications` to allow
+over :code:`ChannelInterface`\ s between a single pair of :code:`RlApplication`\ s to allow
 using different communication channels.
 
-Simulating communication between :code:`RlApplications` over simulated network
+Simulating communication between :code:`RlApplication`\ s over simulated network
 channels includes the chance that a channel is broken and that therefore
 no communication is possible. This has to be handled by the underlying
 protocols or the user of the framework, since the user is responsible for the
@@ -194,12 +203,12 @@ RlApplication
 
 The :code:`RlApplication` generalizes functionality that is equal among all
 applications provided by this module. This includes IDs to identify specific
-:code:`RlApplication`, functionality to send and to handle :code:`ChannelInterfaces`.
+:code:`RlApplication`, functionality to send and to handle :code:`ChannelInterface`\ s.
 In this way a generalized interface for all possible RL applications is
 established which can be used by all classes handling all kinds of RL applications, like
 the :code:`CommunicationHelper` introduced in :ref:`sec-helper`.
 
-In theory, multiple :code:`RlApplications` of the same type can be installed on
+In theory, multiple :code:`RlApplication`\ s of the same type can be installed on
 the same :code:`Node`. Nevertheless, this was not tested yet since in most cases
 tasks of the same type (e.g. collecting observations) do not have to be
 separated into different applications when performed on the same :code:`Node`.
@@ -221,19 +230,19 @@ Interaction with other RlApplications
 =====================================
 
 The :code:`AgentApplication` may receive observations and rewards from one or
-multiple :code:`ObservationApplications` resp. :code:`RewardApplications`.
+multiple :code:`ObservationApplication`\ s resp. :code:`RewardApplication`\ s.
 To support as many use cases as possible, it is also supported to receive
-any data from :code:`ObservationApplications` resp. :code:`RewardApplications`, which is
+any data from :code:`ObservationApplication`\ s resp. :code:`RewardApplication`\ s, which is
 not immediatly used as observations or rewards but from which observations
 and rewards are derived by custom calculations. Therefore, the data
-transmitted from :code:`ObservationApplications` to :code:`AgentApplications` (which is
+transmitted from :code:`ObservationApplication`\ s to :code:`AgentApplication`\ s (which is
 called observation in the following) does not necessarily fit into the
 observation space of the agent.
 Likewise, an :code:`AgentApplication` can send actions (or any data derived
-from it's actions) to one or multiple :code:`ActionApplications`.
+from it's actions) to one or multiple :code:`ActionApplication`\ s.
 
 Additionally to the common RL interactions, this framework also supports
-transmitting arbitrary messages between :code:`AgentApplications`. This provides
+transmitting arbitrary messages between :code:`AgentApplication`\ s. This provides
 users of this framework with the chance to implement a protocol for agent
 communication. Furthermore, it is the basis for exchanging model updates
 or policies between agents.
@@ -257,8 +266,8 @@ Receiving, storing and calculating observations resp. rewards
 =============================================================
 
 To allow the :code:`AgentApplication` to arbitrarily calculate observations and
-rewards based on the messages received from :code:`ObservationApplications` and
-:code:`RewardApplications`, these received messages have to be stored in the
+rewards based on the messages received from :code:`ObservationApplication`\ s and
+:code:`RewardApplication`\ s, these received messages have to be stored in the
 :code:`AgentApplication`. For this purpose a new data structure, called
 :code:`HistoryContainer` was designed. Each :code:`AgentApplication` maintains one
 :code:`HistoryContainer` for observations (:code:`m_obsDataStruct`) and one for rewards
@@ -277,17 +286,17 @@ can then specify the behavior of the :code:`AgentApplication` in response to suc
 a message. For example, the :code:`AgentApplication` could wait for 10
 observations before inferring the next action. This is done by
 registering the abstract methods :code:`AgentApplication::OnRecvObs` and
-:code:`AgentApplication::OnRecvReward` at the according :code:`ChannelInterfaces`.
+:code:`AgentApplication::OnRecvReward` at the according :code:`ChannelInterface`\ s.
 
 This framework is intended to make communications between RL components
 more realistic. Nevertheless, it shall still support using global
-knowledge (e.g. knowledge available on other :code:`Nodes`) to calculate rewards
+knowledge (e.g. knowledge available on other :code:`Node`\ s) to calculate rewards
 and observations. Particularly, global knowledge can be helpful to
 calculate rewards during offline training. If such global knowledge (i.e.
 data available without delay or communication overhead) shall be used,
 it can just be accessed when rewards and/or observations are calculated
 within the :code:`AgentApplication` or data can be transmitted via
-:code:`SimpleChannelInterfaces`.
+:code:`SimpleChannelInterface`\ s.
 
 
 Execution of actions
@@ -301,13 +310,13 @@ can be configured in :code:`OpenGymMultiAgentInterface::NotifyCurrentState`.
 Then the :code:`OpenGymMultiAgentInterface` delays calling
 :code:`AgentApplication::InitiateAction` by the configured actionDelay. Per default,
 :code:`AgentApplication::InitiateAction` sends the received action to all connected
-:code:`ActionApplications`. Because data is transmitted via
-:code:`OpenGymDictContainers` between :code:`RlApplications`, the received action is
+:code:`ActionApplication`\ s. Because data is transmitted via
+:code:`OpenGymDictContainer`\ s between :code:`RlApplication`\ s, the received action is
 wrapped into such a container under the key \"default\". This method is
 intended to be overwritten if different behaviour is needed. In this way,
 the action can for example be divided into partial actions that are
-sent to different :code:`ActionApplications`. Alternatively, one could also
-specify in a part of the action to which :code:`ActionApplications` the action
+sent to different :code:`ActionApplication`\ s. Alternatively, one could also
+specify in a part of the action to which :code:`ActionApplication`\ s the action
 shall be sent.
 
 
@@ -318,7 +327,7 @@ In many RL tasks different agents perform inference and training.
 Therefore, one could provide different :code:`AgentApplication` classes for these
 two purposes. Nevertheless, a general :code:`AgentApplication` class, which can
 perform both inference and training is also necessary to support e.g.
-online training. Consequently, the :code:`AgentApplications` used for inference
+online training. Consequently, the :code:`AgentApplication`\ s used for inference
 and training would only be specializations of this class, which provide
 less functionality. That is why it was decided to leave it to the user
 to use only the functionality which is needed in the current use case.
@@ -333,7 +342,7 @@ DataCollectorApplication
 The :code:`DataCollectorApplication` is the base class which is inherited by
 :code:`ObservationApplication` and :code:`RewardApplication` since both provide similar
 functionality: They collect scenario-specific data, maintain
-:code:`ChannelInterfaces` connected to :code:`AgentApplications`, and provide
+:code:`ChannelInterface`\ s connected to :code:`AgentApplication`\ s, and provide
 functionality to send over these interfaces. To register the applications
 at scenario-specific trace sources the user has to define a custom
 :code:`ObservationApplication::Observe` resp. :code:`RewardApplication::Reward`
@@ -347,39 +356,39 @@ the simulation starts, :code:`DataCollectorApplication::RegisterCallbacks`
 is called in the :code:`DataCollectorApplication::Setup` method.
 
 Each :code:`ObservationApplication` resp. :code:`RewardApplication` can send observations
-resp. rewards to one or multiple :code:`AgentApplications` in order not to limit
+resp. rewards to one or multiple :code:`AgentApplication`\ s in order not to limit
 possible scenarios.
 
 
 ActionApplication
 *****************
 
-The :code:`ActionApplication` provides functionality to maintain :code:`ChannelInterfaces`
-which are connected to :code:`AgentApplications` and to receive actions (in the
-form of :code:`OpenGymDictContainers`). The abstract method :code:`ActionApplication::ExecuteActions` is
+The :code:`ActionApplication` provides functionality to maintain :code:`ChannelInterface`\ s
+which are connected to :code:`AgentApplication`\ s and to receive actions (in the
+form of :code:`OpenGymDictContainer`\ s). The abstract method :code:`ActionApplication::ExecuteAction`\ s is
 designed to provide a place for the user-specific code that handles the
 different actions. This method is automatically called when data is
-received on the registered :code:`ChannelInterfaces`. Therefore, it is connected
+received on the registered :code:`ChannelInterface`\ s. Therefore, it is connected
 to the according callbacks within the :code:`ActionApplication::AddAgentInterface` method.
 
 General Decisions
 *****************
 
-All :code:`RlApplications` have to store multiple :code:`ChannelInterfaces` that connect
-them to other :code:`RlApplications`. Typically, all :code:`ChannelInterfaces` connected
+All :code:`RlApplication`\ s have to store multiple :code:`ChannelInterface`\ s that connect
+them to other :code:`RlApplication`\ s. Typically, all :code:`ChannelInterface`\ s connected
 to a specific remote :code:`RlApplication` are used together. Furthermore,
-multiple :code:`ChannelInterfaces` between a pair of :code:`RlApplications` have to be
+multiple :code:`ChannelInterface`\ s between a pair of :code:`RlApplication`\ s have to be
 supported to enable communication over different channels. Therefore,
 InterfaceMaps were introduced, which are essentially two-dimensional maps.
-The outer map is unordered and maps :code:`applicationIds` to a second ordered map.
+The outer map is unordered and maps :code:`applicationId`\ s to a second ordered map.
 The second map maps an ID to the :code:`ChannelInterface`. This ID is unique
-within this map of :code:`ChannelInterfaces` connected to a specific :code:`RlApplication`.
+within this map of :code:`ChannelInterface`\ s connected to a specific :code:`RlApplication`.
 To ensure this uniqueness, the entries are stored in ascending order of
 the IDs. In this way, one can simply use the last entry to generate a new
-unique ID. Connecting two :code:`RlApplications` over multiple :code:`ChannelInterfaces`
+unique ID. Connecting two :code:`RlApplication`\ s over multiple :code:`ChannelInterface`\ s
 is an edge case. Therefore, all :code:`RlApplication::Send` methods are implemented with
 signatures that allow to send to a specific :code:`RlApplication`. Nevertheless,
-storing :code:`ChannelInterfaces` with IDs makes it possible to also provide
+storing :code:`ChannelInterface`\ s with IDs makes it possible to also provide
 methods to sent over a certain :code:`ChannelInterface`.
 
 We did not consider that during inference the agent might not be able to compute another action.
@@ -387,12 +396,12 @@ In reality, the computation either needs to be queued ("single threaded") or pro
 The latter case is different than the current implementation, because the individual inference times increase with increased parallelism.
 For a detailed discussion as how to extend the framework with this feature, see :ref:`sec-framework-expansion`
 
-In complex scenarios with many :code:`ObservationApplications` and
-:code:`AgentApplications` each :code:`ObservationApplication` should possibly be able to
+In complex scenarios with many :code:`ObservationApplication`\ s and
+:code:`AgentApplication`\ s each :code:`ObservationApplication` should possibly be able to
 communicate with each :code:`AgentApplication`. In this case, it is not
 practicable to configure all communication connections before the
 simulation started. Therefore, it is necessary to support dynamically
-adding and removing :code:`ChannelInterfaces` during simulation time, which is
+adding and removing :code:`ChannelInterface`\ s during simulation time, which is
 done by :code:`RlApplication::AddInterface` and :code:`RlApplication::DeleteInterface` methods.
 
 In some cases, one has to configure something within an :code:`RlApplication`
@@ -461,16 +470,16 @@ handles single-agent RL as a special case of multi-agent RL.
 .. figure:: figures/multiagent-interface.*
    :align: center
 
-   Interaction between |ns3| simulation (C++) and :code:`Ns3MultiAgentEnv` (Python)
+   Interaction between *ns-3* simulation (C++) and :code:`Ns3MultiAgentEnv` (Python)
 
 Communication between the Python-based training process and the simulation
 in C++ works over the :code:`Ns3MultiAgentEnv` (in Python) and the
 :code:`OpenGymMultiAgentInterface` (in C++), which were added to *ns3-ai*. The
 training/inference process is then initiated by the Python side using
-:code:`Ns3MultiAgentEnv`. The Python process starts the |ns3| simulation process
+:code:`Ns3MultiAgentEnv`. The Python process starts the *ns-3* simulation process
 (implemented in C++) as a subprocess and waits for receiving observations
 and rewards from the C++ process. Whenever an agent decides to step (via
-the :code:`AgentApplication::InferAction` method), the C++ process running the |ns3| simulation
+the :code:`AgentApplication::InferAction` method), the C++ process running the *ns-3* simulation
 switches back to the Python process via the :code:`OpenGymMultiAgentInterface::NotifyCurrentState` method
 with the observation and the reward of the according agent. The Python
 process answers with an action for this agent. Only then, the simulation is resumed
@@ -485,56 +494,56 @@ Helper
 ---------------
 
 In a typical use case this framework has to be integrated into an existing
-|ns3| scenario. In |ns3|, the concept of helpers is commonly used to
+*ns-3* scenario. In *ns-3*, the concept of helpers is commonly used to
 simplify the configuration and setup tasks the user has to perform.
 
 In *ns-3.42* an :code:`ApplicationHelper` was introduced, which is used to create
-and install applications of a specified type on :code:`Nodes`. To avoid repeating
+and install applications of a specified type on :code:`Node`\ s. To avoid repeating
 casts, which would lead to very cluttered code, an :code:`RlApplicationHelper`
-was introduced by this framework which returns :code:`RlApplicationContainers`
-instead of :code:`ApplicationContainers`.
+was introduced by this framework which returns :code:`RlApplicationContainer`\ s
+instead of :code:`ApplicationContainer`\ s.
 
 The main configuration task of this framework is the setup of all
-communication connections between :code:`RlApplications`, e.g. the connection of
-all :code:`ObservationApplications` to their according :code:`AgentApplications`. For this
+communication connections between :code:`RlApplication`\ s, e.g. the connection of
+all :code:`ObservationApplication`\ s to their according :code:`AgentApplication`\ s. For this
 purpose, the :code:`CommunicationHelper` was created. The framework should allow
-all possible connections between pairs of :code:`RlApplications` without making
+all possible connections between pairs of :code:`RlApplication`\ s without making
 any restricting assumptions. This is done by letting the user configure
 the communication relationships via an adjacency list. Thereby, it is even
 possible to configure multiple different connections, e.g. over different
-channels between two :code:`RlApplications`.
+channels between two :code:`RlApplication`\ s.
 
-To allow the user to identify :code:`RlApplications` e.g. when passing them to
-this adjacency list, :code:`RlApplicationIds` were introduced. They consist of a
+To allow the user to identify :code:`RlApplication`\ s e.g. when passing them to
+this adjacency list, :code:`RlApplicationId`\ s were introduced. They consist of a
 part identifying the :code:`applicationType` (e.g. :code:`ObservationApplication`) and an
-:code:`applicationId` which is unique among all :code:`RlApplications` of this type. In
+:code:`applicationId` which is unique among all :code:`RlApplication`\ s of this type. In
 this way, the :code:`applicationType` can be identified when necessary and
 whenever the :code:`applicationType` is clear, only the :code:`applicationId` is used for
 identification. The :code:`CommunicationHelper` is also used for creating these
 unique Ids.
-To do this, it needs to have access to all :code:`RlApplications` existing in a
-scenario. One option for this is to create all :code:`RlApplications` within the
+To do this, it needs to have access to all :code:`RlApplication`\ s existing in a
+scenario. One option for this is to create all :code:`RlApplication`\ s within the
 :code:`CommunicationHelper`. This requires the user to provide the
-:code:`CommunicationHelper` with all :code:`Nodes` and the according:code:`applicationTypes` to
+:code:`CommunicationHelper` with all :code:`Node`\ s and the according:code:`applicationType`\ s to
 install on them. However, this would just move the identification problem
-to the level of the :code:`Nodes`. Additionally, this approach would conform less
+to the level of the :code:`Node`\ s. Additionally, this approach would conform less
 with the general idea that the user defines the location of applications
-by installing them on :code:`Nodes`. That is why, the tasks of creating/installing
-:code:`RlApplications` and configuring them and their communication relationships
+by installing them on :code:`Node`\ s. That is why, the tasks of creating/installing
+:code:`RlApplication`\ s and configuring them and their communication relationships
 was split between the :code:`RlApplicationHelper` and the :code:`CommunicationHelper`.
-In this way, it is required that the user passes all :code:`RlApplications` to
-the :code:`CommunicationHelper`. Then the :code:`RlApplicationIds` can be set by the
+In this way, it is required that the user passes all :code:`RlApplication`\ s to
+the :code:`CommunicationHelper`. Then the :code:`RlApplicationId`\ s can be set by the
 :code:`CommunicationHelper` via the :code:`CommunicationHelper::SetIds` method.
 
-Besides a pair of :code:`RlApplicationIds`, the user has to specify in the
+Besides a pair of :code:`RlApplicationId`\ s, the user has to specify in the
 adjacency list all attributes that are necessary to configure the
-connection between these :code:`RlApplications`. This is done via
+connection between these :code:`RlApplication`\ s. This is done via
 :code:`CommunicationAttributes` as a compact format for all possible configuration
 data. If no information (i.e. :code:`{}`) is provided by the user, the framework will
-establish :code:`SimpleChannelInterfaces`, so that as little configuration is
+establish :code:`SimpleChannelInterface`\ s, so that as little configuration is
 required as possible. If :code:`SocketCommunicationAttributes` are provided, the
 :code:`CommunicationHelper` is responsible for creating the according
-:code:`ChannelInterfaces` and connecting them. The main goal when designing this
+:code:`ChannelInterface`\ s and connecting them. The main goal when designing this
 configuration interface was to enable as many configurations as possible,
 while making as few configurations as possible necessary. That is why, e.g.
 a default protocol for :code:`SocketCommunicationAttributes` and default IP addresses
@@ -542,9 +551,9 @@ for each :code:`RlApplication` (that is derived from the list of network interfa
 of its :code:`Node`) were implemented.
 
 The :code:`CommunicationHelper::Configure` method was introduced to make it possible to simultaneously
-call the :code:`RlApplication::Setup` method on all :code:`RlApplications` at a time which is
+call the :code:`RlApplication::Setup` method on all :code:`RlApplication`\ s at a time which is
 independent from e.g. the constructors, so that it can be done after
-setting the :code:`RlApplicationIds` but before setting up the communication
+setting the :code:`RlApplicationId`\ s but before setting up the communication
 relationships. The methods :code:`CommunicationHelper::Configure` and :code:`CommunicationHelper::SetIds` could be called
 combinedly in a single method, so that the user does not have to
 call two methods. However, this was not done so far because both methods
@@ -571,25 +580,25 @@ Framework expansion options
        it be reduced?
 
    * The required communication functionality is already implemented to a large extent:
-     On the |ns3| side, in :code:`AgentApplication::OnRecvFromAgent` logic to handle model weights, experience, and model
+     On the *ns-3* side, in :code:`AgentApplication::OnRecvFromAgent` logic to handle model weights, experience, and model
      update messages need to be handled by the agent. The message flow is depicted in :ref:`fig-model-updates`.
 
      .. _fig-model-updates:
      .. figure:: figures/model-updates.*
         :align: center
 
-        Interaction of inference agents, training server, and the ns3-ai message interface
+        Interaction of inference agents, trainings server, and the ns3-ai message interface
 
      This message flow is fully implemented; only the ns3-ai message handling on the Python side alongside the interaction
      with Ray is still missing.
 
- * Support moving agents (and other :code:`RlApplications`) to another :code:`Node`. (not
+ * Support moving agents (and other :code:`RlApplication`\ s) to another :code:`Node`. (not
    started)
 
    * In complex scenarios it might be required to change the :code:`Node` from
      which the agent receives its observations or where it performs its
      actions. Currently, this would require installing
-     :code:`ObservationApplications` and :code:`ActionApplications` on every possible :code:`Node`
+     :code:`ObservationApplication`\ s and :code:`ActionApplication`\ s on every possible :code:`Node`
      and then switch between them when sending. Since this is prone to
      bugs at runtime and difficult to track especially for bigger
      scenarios, it would be more handy to move an existing application to
@@ -604,7 +613,7 @@ Framework expansion options
 
    * To simulate inference without training or continue training of
      promising policies, it is required to implement Ray's checkpointing. We have
-     already implemented inference runs. However, continuing training hasn’t
+     already implemented inference runs. However, continuing training hasn't
      been tested yet.
 
 

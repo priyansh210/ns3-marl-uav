@@ -4,6 +4,13 @@ Our project mainly builds upon the `ns3` network simulator, `ns3-ai` for ML inte
 
 You can find the design documentation here: <https://DEFIANCE-project.github.io>
 
+## About the ns3-defiance repository
+
+We provide a framework for ML and RL research using ns3.
+You can find our [design documentation and user documentation here](https://DEFIANCE-project.github.io).
+
+For a practical example of how our framework is used, see [this Medium article](https://medium.com/@oliver.zimmermann/reinforcement-learning-in-ns3-part-1-698b9c30c0cd). The blog is divided into two parts and demonstrates building a balancing inverted pendulum in a network scenario using our framework.
+
 ## Setup the development environment
 
 ### Installation with `bake`
@@ -66,9 +73,7 @@ further information refer to <https://www.nsnam.org/docs/manual/html/how-to-writ
 
 The special ns3-ai tests need to be executed with `./contrib/defiance/tests/run-python-tests.sh`
 
-## About the ns-defiance repository
-
-We are building a framework for ML and RL research using ns3. More information will be added soon.
+## Frequent problems
 
 When you run a ns3 simulation which uses ns3-ai, a segmentation fault occurs. A corresponding python agent is required
 to run the simulation. For this, you can use the `run-agent` cli program, i.e. `run-agent train` for training with ray
