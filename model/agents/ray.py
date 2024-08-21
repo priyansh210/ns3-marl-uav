@@ -139,7 +139,9 @@ def start_training(
     ns3_settings.pop("visualize", None)
     env = Ns3MultiAgentEnv(targetName=env_name, ns3Path=NS3_HOME, ns3Settings=ns3_settings)
 
-    register_env("defiance", lambda _: env)
+    register_env(
+        "defiance", lambda _: Ns3MultiAgentEnv(targetName=env_name, ns3Path=NS3_HOME, ns3Settings=ns3_settings)
+    )
     training_defaults: dict[str, Any] = {
         "gamma": 0.99,
         "lr": 0.0003,
@@ -189,6 +191,7 @@ def start_training(
             .rollouts(num_envs_per_worker=1, num_rollout_workers=1, create_env_on_local_worker=False)
             .multi_agent(policies=policies, policy_mapping_fn=policy_mapping_fn)
         )
+        env.close()
 
         if load_checkpoint_path:
             tuner = Tuner.restore(load_checkpoint_path, "PPO", param_space=config.to_dict())
