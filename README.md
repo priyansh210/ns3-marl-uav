@@ -34,8 +34,9 @@ development dependencies, refer
 to [our devcontainer Dockerfile](https://github.com/DEFIANCE-project/bake-defiance/blob/main/.devcontainer/Dockerfile#L9)
 
 1. Clone ns3 `git clone https://gitlab.com/nsnam/ns-3-dev.git -b ns-3.40`
-2. Some of our code needs that the environment variable `NS3_HOME` is set. Set it with `export NS3_HOME=$(pwd)/ns-3-dev`
+2. Some of our code needs that the environment variable `NS3_HOME` is set. Set it with `export NS3_HOME=$(pwd)/ns-3.40`
 3. Clone ns3-ai and ns3-defiance into `ns3/contrib`:
+
     ```shell-c
    cd ns-3-dev/
    git clone https://github.com/DEFIANCE-project/ns3-ai contrib/ai
