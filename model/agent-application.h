@@ -190,7 +190,7 @@ class AgentApplication : public RlApplication
      * \c m_obsDataStruct.
      * Once there are enough observations, \c InferAction() should be called to begin the inference
      * cycle.
-     * \param remoteAppId ID of the RewardApplication from which the reward was received.
+     * \param remoteAppId ID of the ObservationApplication from which the observation was received.
      */
     virtual void OnRecvObs(uint remoteAppId) = 0;
 
