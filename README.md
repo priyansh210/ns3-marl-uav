@@ -2,10 +2,6 @@
 
 Our project mainly builds upon the `ns3` network simulator, `ns3-ai` for ML integration.
 
-You can find the design documentation here: <https://DEFIANCE-project.github.io>
-
-## About the ns3-defiance repository
-
 We provide a framework for ML and RL research using ns3.
 You can find our [design documentation and user documentation here](https://DEFIANCE-project.github.io).
 
@@ -45,6 +41,7 @@ to [our devcontainer Dockerfile](https://github.com/DEFIANCE-project/bake-defian
    git clone https://github.com/DEFIANCE-project/ns3-ai contrib/ai
    git clone https://github.com/DEFIANCE-project/ns3-defiance contrib/defiance
     ```
+
 4. Make sure, you have all dependencies. Running `./ns3 configure --enable-python --enable-examples --enable-tests`
    should succeed.
 5. Then, compile ns3-ai to generate the message types with protobuf: `./ns3 build ai`
