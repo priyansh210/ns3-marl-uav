@@ -9,7 +9,7 @@ For a practical example of how our framework is used, see [this Medium article](
 
 ## Setup the development environment
 
-### Installation with `bake`
+### Installation with bake
 
 See <https://github.com/DEFIANCE-project/bake-defiance> for easy instructions.
 
@@ -25,7 +25,7 @@ Then, you can build a docker image containing your local changes with a simple `
 The ns3 root directory is at `$NS3_HOME`; the default working directory.
 By default, ns3 and ns3-defiance are built directly. To skip the build, add `--build-arg BUILD_NS3=False`.
 
-### Installation without `bake`
+### Installation without bake
 
 The manual way:
 
