@@ -524,7 +524,7 @@ unique Ids.
 To do this, it needs to have access to all :code:`RlApplication`\ s existing in a
 scenario. One option for this is to create all :code:`RlApplication`\ s within the
 :code:`CommunicationHelper`. This requires the user to provide the
-:code:`CommunicationHelper` with all :code:`Node`\ s and the according:code:`applicationType`\ s to
+:code:`CommunicationHelper` with all :code:`Node`\ s and the according :code:`applicationType`\ s to
 install on them. However, this would just move the identification problem
 to the level of the :code:`Node`\ s. Additionally, this approach would conform less
 with the general idea that the user defines the location of applications
