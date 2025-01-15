@@ -86,6 +86,10 @@ RlApplication::GetDefaultAddress()
 void
 RlApplication::Setup()
 {
+    if (!GetNode()->GetObject<Ipv4>())
+    {
+        return;
+    }
     // first interface should be loopback -> skip it if you can
     if (GetNode()->GetObject<Ipv4>()->GetNInterfaces() >= 2)
     {
