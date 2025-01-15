@@ -1,6 +1,7 @@
 default:
   tags:
     - docker
+    - openhpi-cloud
 
 stages:
   - init
