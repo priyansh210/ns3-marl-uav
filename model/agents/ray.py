@@ -96,7 +96,7 @@ def start_inference(env_name: str, load_checkpoint_path: str | Path, **ns3_setti
         policies = Policy.from_checkpoint(str(load_checkpoint_path))
 
     ns3_settings["visualize"] = ""
-    env = Ns3MultiAgentEnv(targetName=env_name, ns3Path=".", ns3Settings=ns3_settings)
+    env = Ns3MultiAgentEnv(targetName=env_name, ns3Path=NS3_HOME, ns3Settings=ns3_settings, trial_name="bootup")
     reset = env.reset()
     agent, observation = only(reset[0].items())
     _, info = only(reset[1].items())
@@ -137,10 +137,17 @@ def start_training(
 ) -> None:
     logger.info("max_episode_steps %s not supported for multi-agent!", max_episode_steps)
     ns3_settings.pop("visualize", None)
-    env = Ns3MultiAgentEnv(targetName=env_name, ns3Path=NS3_HOME, ns3Settings=ns3_settings)
+    env = Ns3MultiAgentEnv(targetName=env_name, ns3Path=NS3_HOME, ns3Settings=ns3_settings, trial_name="init")
+    env.close()
 
     register_env(
-        "defiance", lambda _: Ns3MultiAgentEnv(targetName=env_name, ns3Path=NS3_HOME, ns3Settings=ns3_settings)
+        "defiance",
+        lambda context: Ns3MultiAgentEnv(
+            targetName=env_name,
+            ns3Path=NS3_HOME,
+            ns3Settings=ns3_settings,
+            trial_name=f"training{context.worker_index}_{context.vector_index}",
+        ),
     )
     training_defaults: dict[str, Any] = {
         "gamma": 0.99,
