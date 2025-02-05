@@ -20,7 +20,7 @@ from ray.tune import Tuner, register_env
 from typing_extensions import override
 
 from defiance import NS3_HOME
-from defiance.test.test_marl_interface import only
+from defiance.utils import first
 
 logger = logging.getLogger(__name__)
 
@@ -99,8 +99,8 @@ def start_inference(env_name: str, load_checkpoint_path: str | Path, **ns3_setti
     ns3_settings["visualize"] = ""
     env = Ns3MultiAgentEnv(targetName=env_name, ns3Path=NS3_HOME, ns3Settings=ns3_settings, trial_name="bootup")
     reset = env.reset()
-    agent, observation = only(reset[0].items())
-    _, info = only(reset[1].items())
+    agent, observation = first(reset[0].items())
+    _, info = first(reset[1].items())
     terminated, truncated = False, False
 
     while True:
@@ -116,12 +116,12 @@ def start_inference(env_name: str, load_checkpoint_path: str | Path, **ns3_setti
 
         if terminated or truncated:
             break
-        agent = only(states[0])
+        agent = first(states[0])
         observation, reward, terminated, truncated, info = (state[agent] for state in states)
 
     # Get the termination time if terminated
     if terminated:
-        agent = only(states[0])
+        agent = first(states[0])
         observation, reward, terminated, truncated, info = (state[agent] for state in states)
         logger.info("Average time running: %s", info["terminateTime"])
 
