@@ -1,4 +1,21 @@
 build_lib_example(
+        NAME defiance-addition-example
+        SOURCE_FILES
+                addition-example/addition-agent-app.cc
+                addition-example/no-op-action-app.cc
+                addition-example/node-id-reward-app.cc
+                addition-example/random-observation-app.cc
+                addition-example/simulation.cc
+        HEADER_FILES
+                addition-example/addition-agent-app.h
+                addition-example/no-op-action-app.h
+                addition-example/node-id-reward-app.h
+                addition-example/random-observation-app.h
+        LIBRARIES_TO_LINK
+                ${libdefiance}
+)
+
+build_lib_example(
         NAME defiance-agent-agent-communication
         SOURCE_FILES agent-agent-communication/agent-agent-communication.cc
         LIBRARIES_TO_LINK

@@ -26,7 +26,7 @@ bootstrap:
   stage: init
   needs:
     - project: bp_defiance/bake-defiance
-      job: devcontainer-bootup 
+      job: devcontainer-bootup
       ref: main
       artifacts: true
   image: $DEVCONTAINER_IMAGE
