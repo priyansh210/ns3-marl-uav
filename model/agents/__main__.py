@@ -67,6 +67,29 @@ arg_parser.add_argument(
     help="key=value pairs specifying the ns3 settings",
 )
 
+arg_parser.add_argument(
+    "--enable-wandb",
+    action="store_true",
+    default=False,
+    help="enable wandb logging. By default, project and key will be read from WANDB_API_KEY and WANDB_PROJECT_NAME",
+)
+
+arg_parser.add_argument(
+    "--wandb-project",
+    "-wp",
+    type=str,
+    required=False,
+    help="enable wandb logging to this project",
+)
+
+arg_parser.add_argument(
+    "--wandb-key",
+    "-wk",
+    type=str,
+    required=False,
+    help="enable wandb logging with this api key",
+)
+
 ns = arg_parser.parse_args()
 
 if "runId" in ns.ns3_settings:
@@ -90,13 +113,21 @@ match ns.type:
         start_random_agent(env, ns.iterations)
     case "train":
         if not ns.single:
-            from .ray import start_training
+            from .ray import create_example_training_config, start_training
         else:
-            from .single.ray import start_training
+            from .single.ray import create_example_training_config, start_training
 
-        start_training(
-            ns.env_name, ns.max_episode_steps, ns.iterations, ns.training_params, ns.checkpoint_path, **ns.ns3_settings
+        config = create_example_training_config(
+            ns.env_name, ns.max_episode_steps, ns.training_params, **ns.ns3_settings
         )
+
+        wandb_logger = None
+        if ns.enable_wandb or ns.wandb_key or ns.wandb_project:
+            from ray.air.integrations.wandb import WandbLoggerCallback
+
+            wandb_logger = WandbLoggerCallback(project=ns.wandb_project, api_key=ns.wandb_key)
+
+        start_training(ns.iterations, config, ns.checkpoint_path, wandb_logger)
     case "infer":
         from .ray import start_inference
 

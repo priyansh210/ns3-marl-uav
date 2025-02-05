@@ -67,8 +67,6 @@ opencv-python = "^4.9.0.80"
 cppyy = "*"
 protobuf = "==3.20.3"
 geopy = "^2.4.1"
-ns3ai-python-utils = { path = "../ai/python_utils", develop = true }
-ns3ai-gym-env = { path = "../ai/model/gym-interface/py", develop = true }
 
 # sumo
 osmnx = "^1.9.1"
@@ -80,6 +78,11 @@ matplotlib = "^3.8.3"
 
 # backend
 distro = "^1.9.0"
+wandb = "^0.19.6"
+
+[tool.poetry.group.local.dependencies]
+ns3ai-python-utils = { path = "../ai/python_utils", develop = true }
+ns3ai-gym-env = { path = "../ai/model/gym-interface/py", develop = true }
 
 [tool.poetry.group.dev]
 optional = true
@@ -111,12 +114,6 @@ notebook = "^7.1.3"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8.2.0"
-
-[tool.poetry.group.ns3]
-optional = true
-
-[tool.poetry.group.ns3.dependencies]
-ns3 = { path = "../..", develop = true }
 
 [build-system]
 requires = ["poetry-core"]

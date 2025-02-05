@@ -9,8 +9,9 @@ import numpy as np
 import ray
 from ns3ai_gym_env.envs.ns3_multi_agent_environment import Ns3MultiAgentEnv
 from ray.air import CheckpointConfig, RunConfig
+from ray.air.integrations.wandb import WandbLoggerCallback
 from ray.rllib import Policy, RolloutWorker, SampleBatch
-from ray.rllib.algorithms import PPOConfig
+from ray.rllib.algorithms import AlgorithmConfig, PPOConfig
 from ray.rllib.algorithms.callbacks import DefaultCallbacks
 from ray.rllib.env import BaseEnv
 from ray.rllib.evaluation import Episode
@@ -127,14 +128,10 @@ def start_inference(env_name: str, load_checkpoint_path: str | Path, **ns3_setti
     env.close()
 
 
-def start_training(
-    env_name: str,
-    max_episode_steps: int,
-    iterations: int,
-    training_params: dict[str, Any],
-    load_checkpoint_path: str | None = None,
-    **ns3_settings: str,
-) -> None:
+def create_example_training_config(
+    env_name: str, max_episode_steps: int, training_params: dict[str, Any], **ns3_settings: str
+) -> AlgorithmConfig:
+    """!Create an example algorithm config for use with multiagent training."""
     logger.info("max_episode_steps %s not supported for multi-agent!", max_episode_steps)
     ns3_settings.pop("visualize", None)
     env = Ns3MultiAgentEnv(targetName=env_name, ns3Path=NS3_HOME, ns3Settings=ns3_settings, trial_name="init")
@@ -149,19 +146,6 @@ def start_training(
             trial_name=f"training{context.worker_index}_{context.vector_index}",
         ),
     )
-    training_defaults: dict[str, Any] = {
-        "gamma": 0.99,
-        "lr": 0.0003,
-        "num_sgd_iter": 6,
-        "vf_loss_coeff": 0.01,
-        "use_kl_loss": True,
-        "model": {
-            "fcnet_hiddens": [32],
-            "fcnet_activation": "linear",
-            "vf_share_layers": True,
-        }
-        | training_params,
-    }
 
     if "policy" in training_params and training_params["policy"] == "shared":
         logger.info("started training with shared Policy")
@@ -185,20 +169,43 @@ def start_training(
         def policy_mapping_fn(agent_id: str, *_args: Any, **_kwargs: Any) -> str:
             return agent_id
 
-    training_defaults.pop("policy", None)
+    training_params.pop("policy", None)
+    training_defaults: dict[str, Any] = {
+        "gamma": 0.99,
+        "lr": 0.0003,
+        "num_sgd_iter": 6,
+        "vf_loss_coeff": 0.01,
+        "use_kl_loss": True,
+        "model": {
+            "fcnet_hiddens": [32],
+            "fcnet_activation": "linear",
+            "vf_share_layers": True,
+        }
+        | training_params,
+    }
+    config = (
+        PPOConfig()
+        .environment(env="defiance", env_config={"num_agents": len(env.observation_space.keys())})
+        .training(**training_defaults)
+        .callbacks(DefianceCallbacks)
+        .resources(num_gpus=0)
+        .framework("tf")
+        .rollouts(num_envs_per_worker=1, num_rollout_workers=1, create_env_on_local_worker=False)
+        .multi_agent(policies=policies, policy_mapping_fn=policy_mapping_fn)
+    )
+    env.close()
+    return config
+
+
+def start_training(
+    iterations: int,
+    config: AlgorithmConfig,
+    load_checkpoint_path: str | None = None,
+    wandb_logger: WandbLoggerCallback | None = None,
+) -> None:
+    """!Start a ray training session with the given multiagent algorithm config."""
     try:
         ray.init(num_gpus=0)
-        config = (
-            PPOConfig()
-            .environment(env="defiance", env_config={"num_agents": len(env.observation_space.keys())})
-            .training(**training_defaults)
-            .callbacks(DefianceCallbacks)
-            .resources(num_gpus=0)
-            .framework("tf")
-            .rollouts(num_envs_per_worker=1, num_rollout_workers=1, create_env_on_local_worker=False)
-            .multi_agent(policies=policies, policy_mapping_fn=policy_mapping_fn)
-        )
-        env.close()
 
         if load_checkpoint_path:
             tuner = Tuner.restore(load_checkpoint_path, "PPO", param_space=config.to_dict())
@@ -212,6 +219,7 @@ def start_training(
                         checkpoint_frequency=1,
                         checkpoint_at_end=True,
                     ),
+                    callbacks=[wandb_logger] if wandb_logger else [],
                 ),
                 param_space=config.to_dict(),
             )
