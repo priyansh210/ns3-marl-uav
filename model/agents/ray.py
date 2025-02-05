@@ -183,7 +183,7 @@ def create_example_training_config(
         }
         | training_params,
     }
-    config = (
+    return (
         PPOConfig()
         .environment(env="defiance", env_config={"num_agents": len(env.observation_space.keys())})
         .training(**training_defaults)
@@ -193,8 +193,6 @@ def create_example_training_config(
         .rollouts(num_envs_per_worker=1, num_rollout_workers=1, create_env_on_local_worker=False)
         .multi_agent(policies=policies, policy_mapping_fn=policy_mapping_fn)
     )
-    env.close()
-    return config
 
 
 def start_training(

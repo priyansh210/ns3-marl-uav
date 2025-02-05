@@ -17,6 +17,16 @@ using namespace ns3;
 int
 main(int argc, char* argv[])
 {
+    std::string trial_name = "";
+    CommandLine cmd;
+    cmd.AddValue("trial_name", "name of the trial", trial_name);
+    cmd.Parse(argc, argv);
+
+    Ns3AiMsgInterface::Get()->SetNames("My Seg" + trial_name,
+                                       "My Cpp to Python Msg" + trial_name,
+                                       "My Python to Cpp Msg" + trial_name,
+                                       "My Lockable" + trial_name);
+
     auto rewardNodes = NodeContainer(5);
     auto agentNodes = NodeContainer(5);
     auto actionNodes = NodeContainer(5);
