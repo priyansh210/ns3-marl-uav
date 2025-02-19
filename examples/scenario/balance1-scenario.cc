@@ -309,18 +309,25 @@ main(int argc, char* argv[])
     // first of all we need to parse the command line arguments
     uint32_t seed = 1;
     uint32_t runId = 1;
+    uint32_t parallel = 0;
     std::string interfaceType = "SIMPLE"; // use simple channel interface per default
     bool visualize = false;
+    std::string trialName = "";
 
-    CommandLine cmd;
+    CommandLine cmd(__FILE__);
+    cmd.AddValue("trial_name", "name of the trial", trialName);
     cmd.AddValue("seed", "Seed to create comparable scenarios", seed);
     cmd.AddValue("runId", "Run ID. Is increased for every reset of the environment", runId);
+    cmd.AddValue("parallel",
+                 "Parallel ID. When running multiple environments in parallel, this is the index.",
+                 parallel);
     cmd.AddValue("visualize", "Log visualization traces", visualize);
     cmd.AddValue("interfaceType", "The type of the channel interface to use", interfaceType);
     cmd.Parse(argc, argv);
 
-    RngSeedManager::SetSeed(seed);
+    RngSeedManager::SetSeed(seed + parallel);
     RngSeedManager::SetRun(runId);
+    Ns3AiMsgInterface::Get()->SetTrialName(trialName);
 
     LogComponentEnable("BalanceScenario1", LOG_LEVEL_ALL);
     auto environmentCreator = EnvironmentCreator();

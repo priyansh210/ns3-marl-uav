@@ -17,15 +17,23 @@ using namespace ns3;
 int
 main(int argc, char* argv[])
 {
-    std::string trial_name = "";
-    CommandLine cmd;
-    cmd.AddValue("trial_name", "name of the trial", trial_name);
+    uint32_t seed = 0;
+    uint32_t runId = 0;
+    uint32_t parallel = 0;
+    std::string trialName = "";
+
+    CommandLine cmd(__FILE__);
+    cmd.AddValue("seed", "Seed for random number generator", seed);
+    cmd.AddValue("runId", "Run ID. Is increased for every reset of the environment", runId);
+    cmd.AddValue("parallel",
+                 "Parallel ID. When running multiple environments in parallel, this is the index.",
+                 parallel);
+    cmd.AddValue("trial_name", "name of the trial", trialName);
     cmd.Parse(argc, argv);
 
-    Ns3AiMsgInterface::Get()->SetNames("My Seg" + trial_name,
-                                       "My Cpp to Python Msg" + trial_name,
-                                       "My Python to Cpp Msg" + trial_name,
-                                       "My Lockable" + trial_name);
+    RngSeedManager::SetSeed(seed + parallel);
+    RngSeedManager::SetRun(runId);
+    Ns3AiMsgInterface::Get()->SetTrialName(trialName);
 
     auto rewardNodes = NodeContainer(5);
     auto agentNodes = NodeContainer(5);

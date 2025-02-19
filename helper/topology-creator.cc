@@ -111,11 +111,11 @@ TopologyCreator::SetScenario(uint32_t numBs,
     py::int_ pymaxDensity(maxDensity);
 
     py::tuple result = find_location(pynumBs, pyseed, pyminDensity, pymaxDensity);
-    float centerX = result[0].cast<float>();
-    float centerY = result[1].cast<float>();
-    float sizeX = result[3].cast<float>();
-    float sizeY = result[2].cast<float>();
-    float density = result[4].cast<float>();
+    auto centerX = result[0].cast<float>();
+    auto centerY = result[1].cast<float>();
+    auto sizeX = result[3].cast<float>();
+    auto sizeY = result[2].cast<float>();
+    auto density = result[4].cast<float>();
     NS_LOG_INFO("Density: " << density);
     return SetScenario(centerX, centerY, sizeX, sizeY);
 }
@@ -128,7 +128,7 @@ TopologyCreator::GetBaseStations(float centerX, float centerY, float sizeX, floa
     py::object getBaseStations = scenarioHelper.attr("add_base_stations");
     py::object numBaseStations = getBaseStations(scenarioName);
     int bs = numBaseStations.cast<int>();
-    uint32_t numBs = (uint32_t)bs;
+    auto numBs = (uint32_t)bs;
     NS_LOG_INFO("Adding " << numBs << " base stations to scenario " << scenarioName);
     std::flush(std::cout);
 

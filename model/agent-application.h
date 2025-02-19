@@ -251,8 +251,8 @@ class AgentApplication : public RlApplication
 
     /**
      * \brief This method defines what the AgentApplication does with actions it receives from Ray.
-     * Usually, it calls \c SendAction(), i.e. the action is sent to all action interfaces. Should
-     * be overwritten by the user if only specific ActionApps should be addressed.
+     * Usually, it calls \c SendAction(), i.e. the action is sent to the specified ActionApplication
+     * via all available interfaces.
      * \param remoteAppId ID of the ActionApplication to which the action is sent.
      * \param action action to send to ActionApps directly corresponding to the action space.
      */

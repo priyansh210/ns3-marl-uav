@@ -107,6 +107,24 @@ build_lib_example(
 )
 
 build_lib_example(
+        NAME defiance-handover
+        SOURCE_FILES
+                handover/handover-scenario.cc
+                handover/handover-action-application.cc
+                handover/handover-agent-application.cc
+                handover/handover-observation-application.cc
+                handover/handover-reward-application.cc
+        HEADER_FILES
+                handover/handover-action-application.h
+                handover/handover-agent-application.h
+                handover/handover-observation-application.h
+                handover/handover-reward-application.h
+        LIBRARIES_TO_LINK
+                ${libapplications}
+                ${libdefiance}
+)
+
+build_lib_example(
         NAME defiance-sumo-test
         SOURCE_FILES sumo-test/sumo-example.cc
         LIBRARIES_TO_LINK

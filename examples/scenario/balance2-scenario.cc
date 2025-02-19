@@ -334,12 +334,18 @@ main(int argc, char* argv[])
     // multiple agents and carts are only supported with SimpleChannelInterfaces
     uint32_t seed = 1;
     uint32_t runId = 1;
+    uint32_t parallel = 0;
     uint agentNum = 1;
     uint cartsPerAgent = 1;
+    std::string trialName = "";
 
-    CommandLine cmd;
+    CommandLine cmd(__FILE__);
+    cmd.AddValue("trial_name", "name of the trial", trialName);
     cmd.AddValue("seed", "Seed to create comparable scenarios", seed);
     cmd.AddValue("runId", "Run ID. Is increased for every reset of the environment", runId);
+    cmd.AddValue("parallel",
+                 "Parallel ID. When running multiple environments in parallel, this is the index.",
+                 parallel);
     cmd.AddValue("interfaceType", "The type of the channel interface to use", interfaceType);
     cmd.AddValue("numberOfAgents",
                  "The number of agents and base stations used in the simulation",
@@ -348,8 +354,9 @@ main(int argc, char* argv[])
     cmd.AddValue("visualize", "Log visualization traces", visualize);
     cmd.Parse(argc, argv);
 
-    RngSeedManager::SetSeed(seed);
+    RngSeedManager::SetSeed(seed + parallel);
     RngSeedManager::SetRun(runId);
+    Ns3AiMsgInterface::Get()->SetTrialName(trialName);
 
     if (interfaceType != "SIMPLE" && (agentNum != 1 || cartsPerAgent != 1))
     {

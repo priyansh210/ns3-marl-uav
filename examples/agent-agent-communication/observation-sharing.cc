@@ -2,6 +2,7 @@
 #include <ns3/ai-module.h>
 #include <ns3/core-module.h>
 
+#include <cstdint>
 #include <iostream>
 #include <vector>
 
@@ -169,8 +170,24 @@ main(int argc, char* argv[])
     Config::SetDefault("ns3::RandomWalk2dMobilityModel::Speed",
                        StringValue("ns3::ConstantRandomVariable[Constant=1.0]"));
     Config::SetDefault("ns3::RandomWalk2dMobilityModel::Bounds", StringValue("0|200|0|200"));
-    CommandLine cmd;
+
+    uint32_t seed = 0;
+    uint32_t runId = 0;
+    uint32_t parallel = 0;
+    std::string trialName = "";
+
+    CommandLine cmd(__FILE__);
+    cmd.AddValue("seed", "Seed for random number generator", seed);
+    cmd.AddValue("runId", "Run ID. Is increased for every reset of the environment", runId);
+    cmd.AddValue("parallel",
+                 "Parallel ID. When running multiple environments in parallel, this is the index.",
+                 parallel);
+    cmd.AddValue("trial_name", "name of the trial", trialName);
     cmd.Parse(argc, argv);
+
+    RngSeedManager::SetSeed(seed + parallel);
+    RngSeedManager::SetRun(runId);
+    Ns3AiMsgInterface::Get()->SetTrialName(trialName);
 
     MobilityHelper mobility;
     mobility.SetPositionAllocator("ns3::RandomDiscPositionAllocator",

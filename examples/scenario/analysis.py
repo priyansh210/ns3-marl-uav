@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from defiance import NS3_HOME
 
-data = pd.read_csv(NS3_HOME + "/stats.csv", names=["NodeID", "PendelumLenght", "Angle", "XPos"])
+data = pd.read_csv(NS3_HOME + "/stats.csv", names=["NodeID", "PendulumLength", "Angle", "XPos"])
 
 node_ids = []
 
@@ -59,7 +59,7 @@ if __name__ == "__main__":
                 "-pattern_type",
                 "glob",
                 "-i",
-                f'{output / f"image_{node_id}_*.png"}',
+                f"{output / f'image_{node_id}_*.png'}",
                 "-c:v",
                 "libx264",
                 "-pix_fmt",

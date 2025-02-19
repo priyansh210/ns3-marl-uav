@@ -43,7 +43,7 @@ class EnvironmentCreator
      */
     void SetupPendulumScenario(uint32_t numCarts,
                                uint32_t numEnbs,
-                               bool EnableTrainingServer); // Balancieren lernern 2 u. 3
+                               bool EnableTrainingServer); // Balancieren lernen 2 u. 3
 
     // Getter methods for the protected attributes
 

@@ -247,7 +247,7 @@ void
 PowerControlMobComEnv::ParseCliArgs(int argc, char* argv[])
 {
     NS_LOG_FUNCTION(this);
-    CommandLine cmd;
+    CommandLine cmd(__FILE__);
     // cmd.AddValue("speed", "Speed of the UE", MakeCallback(PowerControlMobComEnv::SetValue));
     cmd.AddValue("speed", "Speed of the UE", this->arg_speed);
     cmd.AddValue("topology", "Topology to use", this->arg_topology);
@@ -302,7 +302,7 @@ main(int argc, char* argv[])
 {
     using namespace ns3;
 
-    CommandLine cmd;
+    CommandLine cmd(__FILE__);
     Ptr<PowerControlMobComEnv> environment =
         CreateObject<PowerControlMobComEnv>(Seconds(200), MilliSeconds(5), MilliSeconds(0));
     environment->ParseCliArgs(argc, argv);

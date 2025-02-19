@@ -67,7 +67,7 @@ main(int argc, char* argv[])
         "/code/source/ns-3.40/contrib/defiance/examples/pendulum-cart/log.txt";
 
     // the following also maps the command line arguments to attributes of the cart
-    CommandLine cmd;
+    CommandLine cmd(__FILE__);
     cmd.AddValue("OutFilePath", "The path were the output file is saved.", outFilePath);
     cmd.Parse(argc, argv);
 

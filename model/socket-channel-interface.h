@@ -107,8 +107,6 @@ class SocketChannelInterface : public ChannelInterface
      */
     void PartialDisconnect();
 
-    ConnectionStatus m_connectionStatus{
-        ConnectionStatus::DISCONNECTED}; ///< The current connection status of the own interface
     Ptr<SocketChannelInterface> m_communicationPartner{
         nullptr};               ///< The other end of the communication channel
     Ptr<Socket> m_localSocket;  ///< The socket used for receiving connections

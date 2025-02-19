@@ -102,13 +102,18 @@ def start_inference(env_name: str, load_checkpoint_path: str | Path, **ns3_setti
     agent, observation = first(reset[0].items())
     _, info = first(reset[1].items())
     terminated, truncated = False, False
+    time_running = 0.0
 
     while True:
         if "shared_policy" in policies:
             action = policies["shared_policy"].compute_single_action(observation)[0]
         else:
+            flat_obs = {}
+            for key in observation:
+                flat_obs[key] = np.concatenate([observation[key][key2] for key2 in observation[key]])
+            flattened_obs = np.concatenate([flat_obs[key] for key in flat_obs])
             # this changes based on policy_mapping
-            action = policies[agent].compute_single_action(observation)[0]
+            action = policies[agent].compute_single_action(obs=flattened_obs)[0]
         states = env.step({agent: action})
 
         terminated = terminated or states[2]["__all__"]
@@ -123,7 +128,11 @@ def start_inference(env_name: str, load_checkpoint_path: str | Path, **ns3_setti
     if terminated:
         agent = first(states[0])
         observation, reward, terminated, truncated, info = (state[agent] for state in states)
+        time_running += float(info["terminateTime"])
         logger.info("Average time running: %s", info["terminateTime"])
+    else:
+        # Current simulation time is 100 seconds, should be set automatically
+        time_running += float(100)
 
     env.close()
 
@@ -134,6 +143,7 @@ def create_example_training_config(
     """!Create an example algorithm config for use with multiagent training."""
     logger.info("max_episode_steps %s not supported for multi-agent!", max_episode_steps)
     ns3_settings.pop("visualize", None)
+
     env = Ns3MultiAgentEnv(targetName=env_name, ns3Path=NS3_HOME, ns3Settings=ns3_settings, trial_name="init")
     env.close()
 
@@ -142,7 +152,7 @@ def create_example_training_config(
         lambda context: Ns3MultiAgentEnv(
             targetName=env_name,
             ns3Path=NS3_HOME,
-            ns3Settings=ns3_settings,
+            ns3Settings=ns3_settings | {"parallel": context.worker_index},
             trial_name=f"training{context.worker_index}_{context.vector_index}",
         ),
     )
@@ -183,15 +193,17 @@ def create_example_training_config(
         }
         | training_params,
     }
+
     return (
         PPOConfig()
-        .environment(env="defiance", env_config={"num_agents": len(env.observation_space.keys())})
         .training(**training_defaults)
         .callbacks(DefianceCallbacks)
         .resources(num_gpus=0)
         .framework("tf")
-        .rollouts(num_envs_per_worker=1, num_rollout_workers=1, create_env_on_local_worker=False)
+        .rollouts(num_envs_per_worker=1, num_rollout_workers=ns3_settings["parallel"], create_env_on_local_worker=False)
         .multi_agent(policies=policies, policy_mapping_fn=policy_mapping_fn)
+        .reporting(metrics_num_episodes_for_smoothing=1)
+        .environment(env="defiance", env_config={"num_agents": len(env.observation_space.keys())})
     )
 
 

@@ -155,7 +155,6 @@ def parse_args():
         ),
     )
     parser.add_argument("-s", "--seed", type=int, default=42, help="Seed for random number generator")
-    parser.add_argument("-s", "--seed", type=int, default=48, help="Seed for random number generator")
     parser.add_argument(
         "-d",
         "--density",
