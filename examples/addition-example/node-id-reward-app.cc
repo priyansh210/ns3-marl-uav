@@ -24,9 +24,10 @@ NodeListRewardApp::GetTypeId()
 void
 NodeListRewardApp::Observe()
 {
-    auto node_id = (float)GetNode()->GetId() / NodeList::GetNNodes();
+    auto node_id = GetNode()->GetId();
     NS_LOG_INFO("Weighted node id: " << node_id);
-    auto observation = MakeBoxContainer<float>(1, node_id);
+    auto observation = CreateObject<OpenGymDiscreteContainer>(node_id);
+    observation->SetValue(node_id);
     Send(MakeDictContainer("reward_hint", observation));
     Simulator::Schedule(Seconds(1.0), &NodeListRewardApp::Observe, this);
 }

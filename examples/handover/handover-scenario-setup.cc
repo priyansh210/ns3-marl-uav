@@ -193,6 +193,8 @@ scenarioSetup(uint16_t numberOfUes,
             ApplicationContainer serverApps;
 
             UdpClientHelper dlClientHelper(ueIpIfaces.GetAddress(u), dlPort);
+            dlClientHelper.SetAttribute("Interval", TimeValue(Seconds(0.01)));
+            dlClientHelper.SetAttribute("PacketSize", UintegerValue(655));
             clientApps.Add(dlClientHelper.Install(remoteHost));
             PacketSinkHelper dlPacketSinkHelper("ns3::UdpSocketFactory",
                                                 InetSocketAddress(Ipv4Address::GetAny(), dlPort));
@@ -224,6 +226,7 @@ scenarioSetup(uint16_t numberOfUes,
     appHelper.SetAttribute("StopTime", TimeValue(Seconds(simTime)));
     appHelper.SetAttribute("SimulationTime", TimeValue(Seconds(simTime)));
     appHelper.SetAttribute("StepTime", TimeValue(MilliSeconds(stepTime)));
+    appHelper.SetAttribute("LteHelper", PointerValue(lteHelper));
     // UE 0 will be the one we control
     auto rewardApps = appHelper.Install(ueNodes.Get(0));
 

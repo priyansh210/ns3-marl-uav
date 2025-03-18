@@ -33,6 +33,7 @@ def env(request: ParameterSet) -> Iterator[Ns3MultiAgentEnv]:
             "fullness": "QUICK",
             "verbose": None,
         },
+        trial_name=None,
     )
     yield env
     env.close()

@@ -4,7 +4,7 @@ This example demonstrates an example of how to train RL agents in ns-3 to learn 
 
 ## Scenario
 
-Four enBs are placed in a square of 1000m x 1000m. Three UEs follow a RandomWaypointMobilityModel within the square, meaning they walk from a randomly sampled point to another. This happens in a straight line and with constant speed.
+Four eNBs are placed in a square of 1000m x 1000m. Three UEs follow a RandomWaypointMobilityModel within the square, meaning they walk from a randomly sampled point to another. This happens in a straight line and with constant speed.
 
 Automatic handovers, e.g., via the A2A4RsrqHandoverAlgorithm or the A3RsrpHandoverAlgorithm are disabled. Instead, one UE (UE0) is controlled by an agent.
 

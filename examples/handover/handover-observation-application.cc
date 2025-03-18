@@ -78,8 +78,8 @@ HandoverObservationApplication::Observe(uint64_t imsi,
         }
         else
         {
-            auto rsrps = CreateObject<OpenGymBoxContainer<float>>();
-            auto rsrqs = CreateObject<OpenGymBoxContainer<float>>();
+            auto rsrps = CreateObject<OpenGymBoxContainer<int32_t>>();
+            auto rsrqs = CreateObject<OpenGymBoxContainer<int32_t>>();
             for (auto obs : m_observations)
             {
                 rsrps->AddValue(obs.first);

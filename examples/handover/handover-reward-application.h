@@ -3,7 +3,9 @@
 
 #include <cstdint>
 
-using namespace ns3;
+namespace ns3
+{
+class LteHelper;
 
 /**
  * \ingroup defiance
@@ -15,11 +17,9 @@ class ThroughputRewardApp : public RewardApplication
     ThroughputRewardApp(){};
     ~ThroughputRewardApp() override{};
     static TypeId GetTypeId();
-    // Measure arriving packet sizes
+    /// Measure arriving packet sizes
     void IncreaseReceivedBytes(Ptr<const Packet> packet, Ptr<Ipv4> ipLayer, uint32_t interface);
-    // Compute throughput of the UE in the last calculation interval (bit/s)
-    double ComputeThroughput();
-    // Send the reward to the agent
+    /// Send the reward to the agent
     void SendReward();
     void RegisterCallbacks() override;
 
@@ -27,4 +27,6 @@ class ThroughputRewardApp : public RewardApplication
     uint32_t m_receivedBytes{0}; // bytes received since the last reward computation
     Time m_calculationInterval{MilliSeconds(1000)};
     Time m_simTime{Seconds(100)};
+    Ptr<LteHelper> m_lteHelper;
 };
+} // namespace ns3

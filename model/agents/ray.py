@@ -2,6 +2,7 @@
 
 import logging
 from collections import defaultdict
+from functools import partial
 from pathlib import Path
 from typing import Any
 
@@ -11,7 +12,7 @@ from ns3ai_gym_env.envs.ns3_multi_agent_environment import Ns3MultiAgentEnv
 from ray.air import CheckpointConfig, RunConfig
 from ray.air.integrations.wandb import WandbLoggerCallback
 from ray.rllib import Policy, RolloutWorker, SampleBatch
-from ray.rllib.algorithms import AlgorithmConfig, PPOConfig
+from ray.rllib.algorithms import AlgorithmConfig, DQNConfig, PPOConfig
 from ray.rllib.algorithms.callbacks import DefaultCallbacks
 from ray.rllib.env import BaseEnv
 from ray.rllib.evaluation import Episode
@@ -137,25 +138,31 @@ def start_inference(env_name: str, load_checkpoint_path: str | Path, **ns3_setti
     env.close()
 
 
+def create_env(context: Any, env_name: str, ns3_settings: dict[str, Any]) -> Ns3MultiAgentEnv:
+    return Ns3MultiAgentEnv(
+        targetName=env_name,
+        ns3Path=NS3_HOME,
+        ns3Settings=ns3_settings | {"parallel": context.worker_index},
+        trial_name=f"training{context.worker_index}_{context.vector_index}",
+    )
+
+
 def create_example_training_config(
-    env_name: str, max_episode_steps: int, training_params: dict[str, Any], **ns3_settings: str
+    env_name: str,
+    max_episode_steps: int,
+    training_params: dict[str, Any],
+    rollout_fragment_length: int,
+    trainable: str = "PPO",
+    **ns3_settings: Any,
 ) -> AlgorithmConfig:
     """!Create an example algorithm config for use with multiagent training."""
     logger.info("max_episode_steps %s not supported for multi-agent!", max_episode_steps)
     ns3_settings.pop("visualize", None)
 
-    env = Ns3MultiAgentEnv(targetName=env_name, ns3Path=NS3_HOME, ns3Settings=ns3_settings, trial_name="init")
+    env = Ns3MultiAgentEnv(targetName=env_name, ns3Path=NS3_HOME, ns3Settings=ns3_settings.copy(), trial_name="init")
     env.close()
 
-    register_env(
-        "defiance",
-        lambda context: Ns3MultiAgentEnv(
-            targetName=env_name,
-            ns3Path=NS3_HOME,
-            ns3Settings=ns3_settings | {"parallel": context.worker_index},
-            trial_name=f"training{context.worker_index}_{context.vector_index}",
-        ),
-    )
+    register_env("defiance", partial(create_env, env_name=env_name, ns3_settings=ns3_settings.copy()))
 
     if "policy" in training_params and training_params["policy"] == "shared":
         logger.info("started training with shared Policy")
@@ -179,28 +186,25 @@ def create_example_training_config(
         def policy_mapping_fn(agent_id: str, *_args: Any, **_kwargs: Any) -> str:
             return agent_id
 
-    training_params.pop("policy", None)
-    training_defaults: dict[str, Any] = {
-        "gamma": 0.99,
-        "lr": 0.0003,
-        "num_sgd_iter": 6,
-        "vf_loss_coeff": 0.01,
-        "use_kl_loss": True,
-        "model": {
-            "fcnet_hiddens": [32],
-            "fcnet_activation": "linear",
-            "vf_share_layers": True,
-        }
-        | training_params,
-    }
-
+    match trainable:
+        case "PPO":
+            config: AlgorithmConfig = PPOConfig()
+        case "DQN":
+            config = DQNConfig()
+        case _:
+            msg = f"trainable {trainable} not supported, use PPO or DQN instead!"
+            raise ValueError(msg)
     return (
-        PPOConfig()
-        .training(**training_defaults)
+        config.training()
         .callbacks(DefianceCallbacks)
         .resources(num_gpus=0)
         .framework("tf")
-        .rollouts(num_envs_per_worker=1, num_rollout_workers=ns3_settings["parallel"], create_env_on_local_worker=False)
+        .rollouts(
+            num_envs_per_worker=1,
+            num_rollout_workers=ns3_settings["parallel"],
+            create_env_on_local_worker=False,
+            rollout_fragment_length=rollout_fragment_length or "auto",
+        )
         .multi_agent(policies=policies, policy_mapping_fn=policy_mapping_fn)
         .reporting(metrics_num_episodes_for_smoothing=1)
         .environment(env="defiance", env_config={"num_agents": len(env.observation_space.keys())})
@@ -210,6 +214,7 @@ def create_example_training_config(
 def start_training(
     iterations: int,
     config: AlgorithmConfig,
+    trainable: str = "PPO",
     load_checkpoint_path: str | None = None,
     wandb_logger: WandbLoggerCallback | None = None,
 ) -> None:
@@ -218,11 +223,11 @@ def start_training(
         ray.init(num_gpus=0)
 
         if load_checkpoint_path:
-            tuner = Tuner.restore(load_checkpoint_path, "PPO", param_space=config.to_dict())
+            tuner = Tuner.restore(load_checkpoint_path, trainable, param_space=config.to_dict())
             logger.info("Checkpoint restored!")
         else:
             tuner = Tuner(
-                "PPO",
+                trainable,
                 run_config=RunConfig(
                     stop={"training_iteration": iterations},
                     checkpoint_config=CheckpointConfig(

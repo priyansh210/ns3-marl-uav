@@ -6,6 +6,7 @@ from typing import Any
 import ns3ai_gym_env  # noqa: F401  # import to register env
 from ns3ai_gym_env.envs import Ns3MultiAgentEnv
 
+from defiance import NS3_HOME
 from defiance.utils import first
 
 logger = logging.getLogger(__name__)
@@ -21,7 +22,7 @@ def make_debug_env(
 def make_env(env_name: str, max_episode_steps: int, ns3_settings: dict[str, Any], **env_args: Any) -> Ns3MultiAgentEnv:
     """Make a configured ns3-ai gym env."""
     logger.info("max_episode_steps %s not supported for multi-agent!", max_episode_steps)
-    return Ns3MultiAgentEnv(targetName=env_name, ns3Path=".", ns3Settings=ns3_settings, **env_args)
+    return Ns3MultiAgentEnv(targetName=env_name, ns3Path=NS3_HOME, ns3Settings=ns3_settings, **env_args)
 
 
 def start_random_agent(env: Ns3MultiAgentEnv, iterations: int) -> None:

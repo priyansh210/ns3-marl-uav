@@ -69,7 +69,7 @@ e.g. `./test.py -s defiance-agent-application` for the `defiance-agent-applicati
 in `/test/agent-application-test.cc`. For
 further information refer to <https://www.nsnam.org/docs/manual/html/how-to-write-tests.html>.
 
-The special ns3-ai tests need to be executed with `./contrib/defiance/tests/run-python-tests.sh`
+The special ns3-ai tests need to be executed with `pytest contrib/defiance`.
 
 ## Frequent problems
 

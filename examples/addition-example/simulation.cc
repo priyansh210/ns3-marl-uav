@@ -17,10 +17,10 @@ using namespace ns3;
 int
 main(int argc, char* argv[])
 {
-    uint32_t seed = 0;
-    uint32_t runId = 0;
+    uint32_t seed = 1;
+    uint32_t runId = 1;
     uint32_t parallel = 0;
-    std::string trialName = "";
+    std::string trialName = "single_trial";
 
     CommandLine cmd(__FILE__);
     cmd.AddValue("seed", "Seed for random number generator", seed);
@@ -70,7 +70,7 @@ main(int argc, char* argv[])
     commHelper.AddCommunication(adjacency);
     commHelper.Configure();
 
-    Simulator::Stop(Seconds(20));
+    Simulator::Stop(Seconds(400));
     Simulator::Run();
 
     OpenGymMultiAgentInterface::Get()->NotifySimulationEnd();

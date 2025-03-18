@@ -25,9 +25,10 @@ RandomObservationApp::GetTypeId()
 void
 RandomObservationApp::Observe()
 {
-    auto random_number = m_uv->GetValue();
+    auto random_number = m_uv->GetInteger(0, 9);
     NS_LOG_INFO("Random number: " << random_number);
-    auto observation = MakeBoxContainer<float>(1, random_number);
+    auto observation = CreateObject<OpenGymDiscreteContainer>(random_number);
+    observation->SetValue(random_number);
     Send(MakeDictContainer("random_number", observation));
     Simulator::Schedule(Seconds(1.0), &RandomObservationApp::Observe, this);
 }

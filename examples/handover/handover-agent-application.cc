@@ -90,10 +90,14 @@ Ptr<OpenGymSpace>
 HandoverAgentApplication::GetObservationSpace()
 {
     auto dictSpace = CreateObject<OpenGymDictSpace>();
-    auto rsrpsSpace =
-        CreateObject<OpenGymBoxSpace>(-1, 97, std::vector<uint32_t>{m_numBs}, TypeNameGet<float>());
-    auto rsrqsSpace =
-        CreateObject<OpenGymBoxSpace>(-1, 34, std::vector<uint32_t>{m_numBs}, TypeNameGet<float>());
+    auto rsrpsSpace = CreateObject<OpenGymBoxSpace>(-1,
+                                                    97,
+                                                    std::vector<uint32_t>{m_numBs},
+                                                    TypeNameGet<int32_t>());
+    auto rsrqsSpace = CreateObject<OpenGymBoxSpace>(-1,
+                                                    34,
+                                                    std::vector<uint32_t>{m_numBs},
+                                                    TypeNameGet<int32_t>());
     auto cellIdSpace =
         CreateObject<OpenGymBoxSpace>(0, m_numBs, std::vector<uint32_t>{1}, TypeNameGet<int32_t>());
     auto imsiSpace = CreateObject<OpenGymBoxSpace>(0,
@@ -124,12 +128,12 @@ Ptr<OpenGymDictContainer>
 HandoverAgentApplication::GetResetObservation() const
 {
     auto newObservation = CreateObject<OpenGymDictContainer>();
-    auto rsrps = MakeBoxContainer<float>(m_numBs);
-    auto rsrqs = MakeBoxContainer<float>(m_numBs);
+    auto rsrps = MakeBoxContainer<int32_t>(m_numBs);
+    auto rsrqs = MakeBoxContainer<int32_t>(m_numBs);
     for (uint32_t i = 0; i < m_numBs; i++)
     {
-        rsrps->AddValue(-1.0);
-        rsrqs->AddValue(-1.0);
+        rsrps->AddValue(-1);
+        rsrqs->AddValue(-1);
     }
 
     auto cellId = MakeBoxContainer<int32_t>(1, int32_t(0));

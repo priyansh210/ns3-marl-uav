@@ -89,6 +89,16 @@ arg_parser.add_argument(
     required=False,
     help="enable wandb logging with this api key",
 )
+arg_parser.add_argument(
+    "--trainable", "-t", type=str, default="PPO", help="The algorithm (trainable) to use for training."
+)
+arg_parser.add_argument(
+    "--rollout-fragment-length",
+    "-rfl",
+    type=int,
+    default=None,
+    help="The rollout fragment length to be used for training.",
+)
 
 ns = arg_parser.parse_args()
 
@@ -120,7 +130,12 @@ match ns.type:
             from .single.ray import create_example_training_config, start_training
 
         config = create_example_training_config(
-            ns.env_name, ns.max_episode_steps, ns.training_params, **ns.ns3_settings
+            ns.env_name,
+            ns.max_episode_steps,
+            ns.training_params,
+            ns.rollout_fragment_length,
+            ns.trainable,
+            **ns.ns3_settings,
         )
 
         wandb_logger = None
@@ -129,7 +144,7 @@ match ns.type:
 
             wandb_logger = WandbLoggerCallback(project=ns.wandb_project, api_key=ns.wandb_key)
 
-        start_training(ns.iterations, config, ns.checkpoint_path, wandb_logger)
+        start_training(ns.iterations, config, ns.trainable, ns.checkpoint_path, wandb_logger)
     case "infer":
         from .ray import start_inference
 

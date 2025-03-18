@@ -9,7 +9,7 @@ import ray
 from gymnasium.wrappers import TimeLimit
 from ray.air import CheckpointConfig, RunConfig
 from ray.air.integrations.wandb import WandbLoggerCallback
-from ray.rllib.algorithms import AlgorithmConfig, PPOConfig
+from ray.rllib.algorithms import AlgorithmConfig, DQNConfig, PPOConfig
 from ray.rllib.evaluation import Episode
 from ray.tune import Tuner, register_env
 from typing_extensions import override
@@ -36,7 +36,12 @@ class SingleDefianceCallbacks(DefianceCallbacks):
 
 
 def create_example_training_config(
-    env_name: str, max_episode_steps: int, training_params: dict[str, Any], **ns3_settings: str
+    env_name: str,
+    max_episode_steps: int,
+    training_params: dict[str, Any],
+    rollout_fragment_length: int,
+    trainable: str = "PPO",
+    **ns3_settings: str,
 ) -> AlgorithmConfig:
     """!Create an example algorithm config for use with single agent training."""
     register_env(
@@ -47,12 +52,19 @@ def create_example_training_config(
         ),
     )
 
-    training_params = {"lr": 5e-5, "clip_param": 0.3, "train_batch_size": 128} | training_params
+    match trainable:
+        case "PPO":
+            config = PPOConfig().training(**{"lr": 5e-5, "clip_param": 0.3, "train_batch_size": 128} | training_params)
+        case "DQN":
+            config = DQNConfig().training()
+        case _:
+            msg = f"trainable {trainable} not supported, use PPO or DQN instead!"
+            raise ValueError(msg)
     return (
-        PPOConfig()
-        .training(**training_params)
-        .resources(num_gpus=0)
-        .rollouts(num_rollout_workers=1, num_envs_per_worker=1)
+        config.resources(num_gpus=0)
+        .rollouts(
+            num_rollout_workers=1, num_envs_per_worker=1, rollout_fragment_length=rollout_fragment_length or "auto"
+        )
         .framework("tf")
         .environment(env="defiance")
         .callbacks(SingleDefianceCallbacks)
@@ -62,6 +74,7 @@ def create_example_training_config(
 def start_training(
     iterations: int,
     config: AlgorithmConfig,
+    trainable: str = "PPO",
     load_checkpoint_path: str | None = None,
     wandb_logger: WandbLoggerCallback | None = None,
 ) -> None:
@@ -71,7 +84,7 @@ def start_training(
         ray.init()
         logger.info("Training...")
         Tuner(
-            "PPO",
+            trainable,
             run_config=RunConfig(
                 stop={"training_iteration": iterations},
                 checkpoint_config=CheckpointConfig(checkpoint_at_end=True),

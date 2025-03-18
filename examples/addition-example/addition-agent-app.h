@@ -18,7 +18,8 @@ class AdditionAgentApp : public AgentApplication
 
   private:
     /// the last action of the agent is buffered for the reward calculation.
-    double m_last_action;
+    int m_last_action;
+    int m_last_observation;
 
     Ptr<OpenGymSpace> GetObservationSpace() override;
 
