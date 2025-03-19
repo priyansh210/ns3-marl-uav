@@ -66,7 +66,7 @@ def create_example_training_config(
             num_rollout_workers=1, num_envs_per_worker=1, rollout_fragment_length=rollout_fragment_length or "auto"
         )
         .framework("tf")
-        .environment(env="defiance")
+        .environment(env="defiance", env_config=ns3_settings)
         .callbacks(SingleDefianceCallbacks)
     )
 

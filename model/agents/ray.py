@@ -207,7 +207,7 @@ def create_example_training_config(
         )
         .multi_agent(policies=policies, policy_mapping_fn=policy_mapping_fn)
         .reporting(metrics_num_episodes_for_smoothing=1)
-        .environment(env="defiance", env_config={"num_agents": len(env.observation_space.keys())})
+        .environment(env="defiance", env_config={"num_agents": len(env.observation_space.keys()), **ns3_settings})
     )
 
 
