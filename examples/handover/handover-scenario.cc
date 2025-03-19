@@ -106,7 +106,7 @@ main(int argc, char* argv[])
     cmd.AddValue("numberOfEnbs", "Number of eNBs in the simulation", numberOfEnbs);
     cmd.AddValue("distance", "Meters between eNBs (default = 1000)", distance);
     cmd.AddValue("speed", "Meters/second of the UEs (default = 20)", speed);
-    cmd.AddValue("simTime", "Total duration of the simulation (default = 100)", simTime);
+    cmd.AddValue("simTime", "Total duration of the simulation in seconds (default = 100)", simTime);
     cmd.AddValue("stepTime",
                  "Milliseconds between each step in the simulation (default = 420)",
                  stepTime);

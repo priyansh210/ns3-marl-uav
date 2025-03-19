@@ -62,6 +62,9 @@ HandoverAgentApplication::OnRecvObs(uint id)
     m_observation = m_obsDataStruct.GetNewestByID(id)->data;
     if (Simulator::Now() - m_lastInferredActionTime >= MilliSeconds(m_stepTime))
     {
+        NS_LOG_INFO("Infering action");
+        NS_LOG_INFO("Observation: " << m_observation);
+        NS_LOG_INFO("Reward: " << m_reward);
         InferAction();
         m_lastInferredActionTime = Simulator::Now();
     }
@@ -79,10 +82,9 @@ HandoverAgentApplication::OnRecvReward(uint id)
 void
 HandoverAgentApplication::InitiateAction(Ptr<OpenGymDataContainer> action)
 {
-    NS_LOG_FUNCTION(this);
+    NS_LOG_FUNCTION(this << action);
     auto dictAction = CreateObject<OpenGymDictContainer>();
     dictAction->Add("newCellId", action);
-    // wont fix: action should only get to node that the UE is connected to
     SendAction(dictAction);
 }
 
@@ -99,15 +101,10 @@ HandoverAgentApplication::GetObservationSpace()
                                                     std::vector<uint32_t>{m_numBs},
                                                     TypeNameGet<int32_t>());
     auto cellIdSpace =
-        CreateObject<OpenGymBoxSpace>(0, m_numBs, std::vector<uint32_t>{1}, TypeNameGet<int32_t>());
-    auto imsiSpace = CreateObject<OpenGymBoxSpace>(0,
-                                                   m_numUes,
-                                                   std::vector<uint32_t>{1},
-                                                   TypeNameGet<int32_t>());
+        CreateObject<OpenGymBoxSpace>(1, m_numBs, std::vector<uint32_t>{1}, TypeNameGet<int32_t>());
     dictSpace->Add("rsrps", rsrpsSpace);
     dictSpace->Add("rsrqs", rsrqsSpace);
     dictSpace->Add("cellId", cellIdSpace);
-    dictSpace->Add("imsi", imsiSpace);
     return dictSpace;
 }
 
@@ -116,11 +113,7 @@ HandoverAgentApplication::GetActionSpace()
 {
     std::vector<uint32_t> shape = {1};
     std::string dtype = TypeNameGet<int32_t>();
-    Ptr<OpenGymBoxSpace> box = CreateObject<OpenGymBoxSpace>(
-        1,
-        m_numBs,
-        shape,
-        dtype); // 0 for no handover, otherwise switch to cell with cellid
+    Ptr<OpenGymBoxSpace> box = CreateObject<OpenGymBoxSpace>(1, m_numBs, shape, dtype);
     return box;
 }
 
@@ -135,14 +128,10 @@ HandoverAgentApplication::GetResetObservation() const
         rsrps->AddValue(-1);
         rsrqs->AddValue(-1);
     }
-
     auto cellId = MakeBoxContainer<int32_t>(1, int32_t(0));
-    cellId->AddValue(int32_t(0));
-    auto imsi = MakeBoxContainer<int32_t>(1, int32_t(0));
     newObservation->Add("rsrps", rsrps);
     newObservation->Add("rsrqs", rsrqs);
     newObservation->Add("cellId", cellId);
-    newObservation->Add("imsi", imsi);
     return newObservation;
 }
 

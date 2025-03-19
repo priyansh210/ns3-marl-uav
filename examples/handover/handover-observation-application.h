@@ -22,7 +22,7 @@ class HandoverObservationApplication : public ObservationApplication
 
   private:
     uint32_t m_numBs;
-    std::vector<std::pair<float, float>> m_observations;
+    std::vector<std::pair<int32_t, int32_t>> m_observations;
     Time m_lastObservationTime = Seconds(0);
 };
 

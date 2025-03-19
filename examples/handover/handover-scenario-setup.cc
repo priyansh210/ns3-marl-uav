@@ -221,7 +221,7 @@ scenarioSetup(uint16_t numberOfUes,
     }
 
     // Framework code
-    RlApplicationHelper appHelper(ThroughputRewardApp::GetTypeId());
+    RlApplicationHelper appHelper(HandoverRewardApplication::GetTypeId());
     appHelper.SetAttribute("StartTime", TimeValue(Seconds(1)));
     appHelper.SetAttribute("StopTime", TimeValue(Seconds(simTime)));
     appHelper.SetAttribute("SimulationTime", TimeValue(Seconds(simTime)));
@@ -241,6 +241,7 @@ scenarioSetup(uint16_t numberOfUes,
     auto observationApps = appHelper.Install(enbNodes);
 
     appHelper.SetTypeId(HandoverActionApplication::GetTypeId());
+    appHelper.SetAttribute("HandoverAlgorithm", StringValue(handoverAlgorithm));
     appHelper.SetAttribute("NumBs", UintegerValue(numberOfEnbs));
     appHelper.SetAttribute("LteHelper", PointerValue(lteHelper));
     auto actionApps = appHelper.Install(enbNodes);

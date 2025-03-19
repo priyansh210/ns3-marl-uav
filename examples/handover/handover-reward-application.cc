@@ -14,29 +14,29 @@
 
 using namespace ns3;
 
-NS_OBJECT_ENSURE_REGISTERED(ThroughputRewardApp);
+NS_LOG_COMPONENT_DEFINE("HandoverRewardApplication");
 
 TypeId
-ThroughputRewardApp::GetTypeId()
+HandoverRewardApplication::GetTypeId()
 {
     static TypeId tid =
-        TypeId("ThroughputRewardApp")
+        TypeId("HandoverRewardApplication")
             .SetParent<RewardApplication>()
-            .AddConstructor<ThroughputRewardApp>()
+            .AddConstructor<HandoverRewardApplication>()
             .AddAttribute("SimulationTime",
                           "The total simulation time",
                           TimeValue(Seconds(100)),
-                          MakeTimeAccessor(&ThroughputRewardApp::m_simTime),
+                          MakeTimeAccessor(&HandoverRewardApplication::m_simTime),
                           MakeTimeChecker())
             .AddAttribute("StepTime",
                           "Interval for calculation reward",
                           TimeValue(MilliSeconds(1000)),
-                          MakeTimeAccessor(&ThroughputRewardApp::m_calculationInterval),
+                          MakeTimeAccessor(&HandoverRewardApplication::m_calculationInterval),
                           MakeTimeChecker())
             .AddAttribute("LteHelper",
                           "The LteHelper object to use for rewards.",
                           TimeValue(MilliSeconds(1000)),
-                          MakePointerAccessor(&ThroughputRewardApp::m_lteHelper),
+                          MakePointerAccessor(&HandoverRewardApplication::m_lteHelper),
                           MakePointerChecker<LteHelper>());
     return tid;
 }
@@ -44,7 +44,7 @@ ThroughputRewardApp::GetTypeId()
 extern NetDeviceContainer g_ueLteDevs;
 
 void
-ThroughputRewardApp::SendReward()
+HandoverRewardApplication::SendReward()
 {
     auto imsi = g_ueLteDevs.Get(0)->GetObject<LteUeNetDevice>()->GetImsi();
 
@@ -52,12 +52,13 @@ ThroughputRewardApp::SendReward()
                       m_calculationInterval.GetSeconds() / m_simTime.GetSeconds();
     m_receivedBytes = 0;
     auto reward = MakeDictBoxContainer<double>(1, "reward", throughput);
+    NS_LOG_INFO("Reward: " << throughput);
     Send(reward);
-    Simulator::Schedule(m_calculationInterval, &ThroughputRewardApp::SendReward, this);
+    Simulator::Schedule(m_calculationInterval, &HandoverRewardApplication::SendReward, this);
 }
 
 void
-ThroughputRewardApp::RegisterCallbacks()
+HandoverRewardApplication::RegisterCallbacks()
 {
     if (!m_lteHelper->GetRlcStats())
     {
@@ -66,5 +67,5 @@ ThroughputRewardApp::RegisterCallbacks()
     auto stats = m_lteHelper->GetRlcStats();
     stats->SetEpoch(m_calculationInterval);
     stats->SetStartTime(NanoSeconds(1));
-    Simulator::Schedule(m_calculationInterval, &ThroughputRewardApp::SendReward, this);
+    Simulator::Schedule(m_calculationInterval, &HandoverRewardApplication::SendReward, this);
 }

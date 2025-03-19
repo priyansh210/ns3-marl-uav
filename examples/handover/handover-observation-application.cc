@@ -26,7 +26,7 @@ void
 HandoverObservationApplication::DoInitialize()
 {
     ObservationApplication::DoInitialize();
-    m_observations = std::vector<std::pair<float, float>>(m_numBs, std::make_pair(-1, -1));
+    m_observations = std::vector<std::pair<int32_t, int32_t>>(m_numBs, std::make_pair(-1, -1));
 }
 
 TypeId
@@ -52,7 +52,7 @@ HandoverObservationApplication::Observe(uint64_t imsi,
                                         uint16_t rnti,
                                         LteRrcSap::MeasurementReport report)
 {
-    // Measurement reports only from our primary ue
+    // Measurement reports only from our primary UE
     if (imsi != g_ueLteDevs.Get(0)->GetObject<LteUeNetDevice>()->GetImsi())
     {
         return;
@@ -69,30 +69,27 @@ HandoverObservationApplication::Observe(uint64_t imsi,
         auto secCellId = it->physCellId;
         m_observations[secCellId - 1] = std::make_pair(it->rsrpResult, it->rsrqResult);
     }
-    if (imsi == g_ueLteDevs.Get(0)->GetObject<LteUeNetDevice>()->GetImsi())
+
+    if (Simulator::Now() == m_lastObservationTime)
     {
-        if (Simulator::Now() == m_lastObservationTime)
+        NS_LOG_INFO("Already received observation for this time.");
+    }
+    else
+    {
+        auto rsrps = CreateObject<OpenGymBoxContainer<int32_t>>();
+        auto rsrqs = CreateObject<OpenGymBoxContainer<int32_t>>();
+        for (auto obs : m_observations)
         {
-            NS_LOG_DEBUG(m_lastObservationTime.GetSeconds()
-                         << "\tAlready received observation for this time and IMSI.");
+            rsrps->AddValue(obs.first);
+            rsrqs->AddValue(obs.second);
         }
-        else
-        {
-            auto rsrps = CreateObject<OpenGymBoxContainer<int32_t>>();
-            auto rsrqs = CreateObject<OpenGymBoxContainer<int32_t>>();
-            for (auto obs : m_observations)
-            {
-                rsrps->AddValue(obs.first);
-                rsrqs->AddValue(obs.second);
-            }
-            auto observationDict = Create<OpenGymDictContainer>();
-            observationDict->Add("rsrps", rsrps);
-            observationDict->Add("rsrqs", rsrqs);
-            observationDict->Add("cellId", MakeBoxContainer<int32_t>(1, (int32_t)cellId));
-            observationDict->Add("imsi", MakeBoxContainer<int32_t>(1, (int32_t)imsi));
-            m_lastObservationTime = Simulator::Now();
-            Send(observationDict, 0);
-        }
+        NS_LOG_INFO("RSRPs: " << rsrps << " RSRQs: " << rsrqs << " CellId: " << cellId);
+        auto observationDict = Create<OpenGymDictContainer>();
+        observationDict->Add("rsrps", rsrps);
+        observationDict->Add("rsrqs", rsrqs);
+        observationDict->Add("cellId", MakeBoxContainer<int32_t>(1, (int32_t)cellId));
+        m_lastObservationTime = Simulator::Now();
+        Send(observationDict);
     }
 }
 

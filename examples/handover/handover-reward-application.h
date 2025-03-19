@@ -11,11 +11,11 @@ class LteHelper;
  * \ingroup defiance
  * \brief Child class of RewardApplication that sends rewards based on the throughput of the UE.
  */
-class ThroughputRewardApp : public RewardApplication
+class HandoverRewardApplication : public RewardApplication
 {
   public:
-    ThroughputRewardApp(){};
-    ~ThroughputRewardApp() override{};
+    HandoverRewardApplication(){};
+    ~HandoverRewardApplication() override{};
     static TypeId GetTypeId();
     /// Measure arriving packet sizes
     void IncreaseReceivedBytes(Ptr<const Packet> packet, Ptr<Ipv4> ipLayer, uint32_t interface);

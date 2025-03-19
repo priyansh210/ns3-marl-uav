@@ -29,9 +29,9 @@ for iteration in range(iterations):
     i = 0
     while not terminated and not truncated:
         i += 1
-        action = observation[0] + float(agent.split("_")[-1])
+        action = int(observation + float(agent.split("_")[-1]))
         logger.info("taking action %s", action)
-        states = env.step({agent: (action,)})
+        states = env.step({agent: action})
         logger.info("got states %s", states)
         if states[3]["__all__"]:
             break
