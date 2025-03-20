@@ -27,6 +27,7 @@ scenarioSetup(uint16_t numberOfUes,
               double speed = 20.0,
               double simTime = 100.0,
               uint32_t stepTime = 420,
+              uint32_t actionDelay = 0,
               double enbTxPowerDbm = 10.0,
               uint32_t seed = 0,
               uint32_t runId = 0,
@@ -259,9 +260,11 @@ scenarioSetup(uint16_t numberOfUes,
         commHelper.AddCommunication({CommunicationPair{observationApps.GetId(i),
                                                        agentApps.GetId(0),
                                                        CommunicationAttributes{}}});
-        commHelper.AddCommunication({CommunicationPair{actionApps.GetId(i),
-                                                       agentApps.GetId(0),
-                                                       CommunicationAttributes{}}});
+
+        commHelper.AddCommunication(
+            {CommunicationPair{actionApps.GetId(i),
+                               agentApps.GetId(0),
+                               CommunicationAttributes{MilliSeconds(actionDelay)}}});
     }
     commHelper.AddCommunication(
         {CommunicationPair{rewardApps.GetId(0), agentApps.GetId(0), CommunicationAttributes{}}});

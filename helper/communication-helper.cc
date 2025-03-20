@@ -74,7 +74,7 @@ CommunicationHelper::CreateChannelInterfaces(Ptr<RlApplication> clientApp,
         auto clientInterface = CreateObject<SimpleChannelInterface>();
         clientInterface->SetPropagationDelay(attributes.delay);
         auto serverInterface = CreateObject<SimpleChannelInterface>();
-        clientInterface->SetPropagationDelay(attributes.delay);
+        serverInterface->SetPropagationDelay(attributes.delay);
         clientInterface->Connect(serverInterface);
         return {clientInterface, serverInterface};
     }
