@@ -25,7 +25,7 @@ double distance = 1000.0; // m
 double speed = 20.0;      // m/s
 double simTime = 50.0;    // s
 uint32_t stepTime = 420;  // ms
-uint32_t actionDelay = 0; // ms
+uint32_t delay = 0;       // ms
 double enbTxPowerDbm = 10.0;
 std::string trialName = "1";
 bool visualize = false;
@@ -111,10 +111,7 @@ main(int argc, char* argv[])
     cmd.AddValue("stepTime",
                  "Milliseconds between each step in the simulation (default = 420)",
                  stepTime);
-    cmd.AddValue("actionDelay",
-                 "Milliseconds between sending an action from the agent application and receiving "
-                 "it at the action application",
-                 actionDelay);
+    cmd.AddValue("delay", "Transmission delay of Simple Channel Interfaces in ms", delay);
     cmd.AddValue("enbTxPowerDbm", "TX power [dBm] used by HeNBs (default = 10.0)", enbTxPowerDbm);
     cmd.AddValue("seed", "Seed for random number generator", seed);
     cmd.AddValue("runId",
@@ -144,7 +141,7 @@ main(int argc, char* argv[])
                   speed,
                   simTime,
                   stepTime,
-                  actionDelay,
+                  delay,
                   enbTxPowerDbm,
                   seed,
                   runId,
