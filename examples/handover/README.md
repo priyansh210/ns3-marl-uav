@@ -32,3 +32,7 @@ Add the -d flag depending on whether you want to run it in debug or the faster r
 3. Train:\
 ```run-agent train -n defiance-handover``` \
 Look at handover-scenario.cc for more parameters like number of training iterations. Add those parameters with ```--ns3-settings key=value key2=value2```
+
+### Reproducibility
+
+The results were obained by the training commands in `train.sh`. The `results` folder contains the `result.json` and the best checkpoint from training for each command. A diagram showing the training curves can be created with `plot_training_curves.py`.

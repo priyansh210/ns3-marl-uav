@@ -29,3 +29,7 @@ The observation is directly forwarded from the observation app.
 In this scenario, an action app is not needed.
 To showcase a fully configured DEFIANCE scenario, the action is implemented as a no-op, which receives the action of the agent and discards it.
 It is also possible to remove the action app in this case altogether.
+
+## Reproducibility
+
+The results were obained by the training commands in `train.sh`. The `results` folder contains the `result.json` and the best checkpoint from training for the training command. A diagram showing the training curves of all agents can be created with `plot_training_curves.py`.
