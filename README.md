@@ -1,11 +1,9 @@
-# DEFIANCE project: How to Simulate MARL Deployments in Realistic Network Scenarios
+# Simulate MARL Deployments in Realistic Network Scenarios for Fixed-Wing UAVs
 
-Our project mainly builds upon the `ns3` network simulator, `ns3-ai` for ML integration.
+Our project mainly builds upon the `ns3` network simulator, `ns3-ai` for ML integration and `ns3-defiance` project for multi-agent support.
 
-We provide a framework for ML and RL research using ns3.
+Read more about the ML and RL framework : 
 You can find our [design documentation and user documentation here](https://DEFIANCE-project.github.io).
-
-For a practical example of how our framework is used, see [this Medium article](https://medium.com/@oliver.zimmermann/reinforcement-learning-in-ns3-part-1-698b9c30c0cd). The blog is divided into two parts and demonstrates building a balancing inverted pendulum in a network scenario using our framework.
 
 ## Setup the development environment
 
@@ -50,9 +48,10 @@ to [our devcontainer Dockerfile](https://github.com/DEFIANCE-project/bake-defian
 7. Manually install the ns3-ai message
    types: `pip install -e ./contrib/ai/python_utils -e ./contrib/ai/model/gym-interface/py`
 8. Compile everything with `./ns3 build`
-9. You are now able to start the training of our example scenario, such as `defiance-balance2`
-   with `run-agent train -n defiance-balance2`. See `run-agent --help` for more info.
+9. You are now able to start the training of our example scenario, such as `uav-sim`
+   with `run-agent train -n uav-sim --training-params policy=shared --ns3-settings parallel=5 --iterations 200 --rollout-fragment-length 500`. See `run-agent --help` for more info.
 
+10. You can refer files `uav-node` and `uav-env-creator` to modify the evnironement and uavs.
 ### Development tools
 
 This repo comes with additional developer tools, which may be installed with `poetry install --with dev`.
