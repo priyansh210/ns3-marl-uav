@@ -1,21 +1,4 @@
 build_lib_example(
-        NAME defiance-addition-example
-        SOURCE_FILES
-                addition-example/addition-agent-app.cc
-                addition-example/no-op-action-app.cc
-                addition-example/node-id-reward-app.cc
-                addition-example/random-observation-app.cc
-                addition-example/simulation.cc
-        HEADER_FILES
-                addition-example/addition-agent-app.h
-                addition-example/no-op-action-app.h
-                addition-example/node-id-reward-app.h
-                addition-example/random-observation-app.h
-        LIBRARIES_TO_LINK
-                ${libdefiance}
-)
-
-build_lib_example(
         NAME defiance-agent-agent-communication
         SOURCE_FILES agent-agent-communication/agent-agent-communication.cc
         LIBRARIES_TO_LINK
@@ -107,24 +90,6 @@ build_lib_example(
 )
 
 build_lib_example(
-        NAME defiance-handover
-        SOURCE_FILES
-                handover/handover-scenario.cc
-                handover/handover-action-application.cc
-                handover/handover-agent-application.cc
-                handover/handover-observation-application.cc
-                handover/handover-reward-application.cc
-        HEADER_FILES
-                handover/handover-action-application.h
-                handover/handover-agent-application.h
-                handover/handover-observation-application.h
-                handover/handover-reward-application.h
-        LIBRARIES_TO_LINK
-                ${libapplications}
-                ${libdefiance}
-)
-
-build_lib_example(
         NAME defiance-sumo-test
         SOURCE_FILES sumo-test/sumo-example.cc
         LIBRARIES_TO_LINK
@@ -144,4 +109,25 @@ build_lib_example(
                 ${libinternet}
                 ${libmobility}
                 ${libnetanim}
+)
+
+build_lib_example(
+    NAME uav-sim
+    SOURCE_FILES uav-sim/sim.cc
+    LIBRARIES_TO_LINK
+        ${libdefiance}
+        ${libapplications}
+        ${libcore}
+        ${libcsma}
+        ${libinternet}
+        ${libmobility}
+        ${libnetanim}
+        ${libnetwork}
+        ${libssid}
+        ${libwifi}
+        ${libmesh}
+        ${libpointtopoint}
+        ${libaodv}
+        ${libenergy}
+        ${libflowmonitor}
 )

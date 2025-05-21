@@ -24,6 +24,8 @@ build_lib(
             model/history-container.cc
             model/observation-application.cc
             model/pendulum-cart.cc
+            model/uav-node.cc
+            model/uav-env-creator.cc
             model/reward-application.cc
             model/rl-application-container.cc
             model/rl-application.cc
@@ -54,6 +56,8 @@ build_lib(
             model/socket-channel-interface.h
             model/static-environment.h
             model/sumo-environment.h
+            model/uav-node.h
+            model/uav-env-creator.h
             helper/communication-helper.h
             helper/defiance-helper.h
             helper/device-manager.h
@@ -65,6 +69,7 @@ build_lib(
             ${libflow-monitor}
             ${libinternet-apps}
             ${liblte}
+            ${libaodv}
             ${python_libraries}
     TEST_SOURCES
             test/action-application-test.cc

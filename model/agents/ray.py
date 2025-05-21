@@ -19,7 +19,7 @@ from ray.rllib.evaluation import Episode
 from ray.rllib.policy.policy import PolicySpec
 from ray.tune import Tuner, register_env
 from typing_extensions import override
-
+import torch
 from defiance import NS3_HOME
 from defiance.utils import first
 
@@ -183,9 +183,35 @@ def create_example_training_config(
             for agent_id in env.observation_space
         }
 
-        def policy_mapping_fn(agent_id: str, *_args: Any, **_kwargs: Any) -> str:
-            return agent_id
+    training_model = {
+        "gamma": 0.99,  # Discount factor for future rewards
+        "train_batch_size": rollout_fragment_length*ns3_settings["parallel"],
+        "lambda_": 0.95,  # GAE (Generalized Advantage Estimation) parameter
+        "entropy_coeff": 0.005,  # Reduce entropy coefficient to balance exploration and exploitation
+        # "clip_param": 0.1,  # Reduce clipping parameter for PPO to stabilize updates
+        "lr": 0.0003,  # Lower learning rate for smoother updates
+        "num_sgd_iter": 5,  # Increase the number of SGD iterations for better convergence
+        "vf_loss_coeff": 0.5,  # Increase value function loss coefficient to prioritize value function updates
+        "use_kl_loss": True,  # Use KL divergence loss for additional regularization
+        "optimizer": {"type": "Adam", "lr": 0.0001},  # Use Adam optimizer with learning rate
+        "model": {
+            "fcnet_hiddens": [32, 64],  # Increase the size of hidden layers for better representation
+            "fcnet_activation": "relu",  # Use 'relu' activation for smoother gradients
+            "vf_share_layers": True,  # Share layers between value function and policy
+            # "use_lstm": True,  # Enable LSTM for sequence modeling
+            # "max_seq_len": 5,  # Maximum sequence length for observation history
+            # "lstm_cell_size": 128,  # LSTM cell size for sequence processing
+            # "lstm_use_prev_action": True,  # Include previous actions in the sequence
+            # "lstm_use_prev_reward": True,  # Include previous rewards in the sequence
+        },
+        "lr_schedule": [
+            [0, 0.0003],  # Start with a lower learning rate
+            [100, 0.0002],  # Gradually decrease to 0.0002 at iteration 100
+            [200, 0.0001],  # Further decrease to 0.0001 at iteration 200
+        ],
+    }
 
+    # training_params.pop("policy", None)
     match trainable:
         case "PPO":
             config: AlgorithmConfig = PPOConfig()
@@ -195,15 +221,19 @@ def create_example_training_config(
             msg = f"trainable {trainable} not supported, use PPO or DQN instead!"
             raise ValueError(msg)
     return (
-        config.training()
+        config.training(**training_model)
         .callbacks(DefianceCallbacks)
-        .resources(num_gpus=0)
-        .framework("tf")
+        .resources(num_gpus=1,
+                   num_learner_workers=5,
+                   num_gpus_per_learner_worker=0.2
+                   )
+        .framework("torch")
         .rollouts(
             num_envs_per_worker=1,
             num_rollout_workers=ns3_settings["parallel"],
             create_env_on_local_worker=False,
             rollout_fragment_length=rollout_fragment_length or "auto",
+            batch_mode="complete_episodes",
         )
         .multi_agent(policies=policies, policy_mapping_fn=policy_mapping_fn)
         .reporting(metrics_num_episodes_for_smoothing=1)
@@ -220,12 +250,36 @@ def start_training(
 ) -> None:
     """!Start a ray training session with the given multiagent algorithm config."""
     try:
-        ray.init(num_gpus=0)
+        ray.init(num_gpus=1)
 
         if load_checkpoint_path:
-            tuner = Tuner.restore(load_checkpoint_path, trainable, param_space=config.to_dict())
+            # Restore the tuner from the checkpoint path
+            restored_tuner = Tuner.restore(load_checkpoint_path, trainable, param_space=config.to_dict())
             logger.info("Checkpoint restored!")
+
+            # Get the best result from the restored tuner
+            result_grid = restored_tuner.get_results()
+            best_result = result_grid.get_best_result(metric="episode_reward_mean", mode="max")
+
+            # Load the best checkpoint into the algorithm
+            algo = config.build()
+            algo.restore(best_result.checkpoint)
+
+            # Start a new training session with the restored weights
+            tuner = Tuner(
+                trainable,
+                run_config=RunConfig(
+                    stop={"training_iteration": iterations},
+                    checkpoint_config=CheckpointConfig(
+                        checkpoint_frequency=1,
+                        checkpoint_at_end=True,
+                    ),
+                    callbacks=[wandb_logger] if wandb_logger else [],
+                ),
+                param_space=config.to_dict(),
+            )
         else:
+            # Start a new training session without restoring weights
             tuner = Tuner(
                 trainable,
                 run_config=RunConfig(
@@ -245,6 +299,7 @@ def start_training(
         logger.info("Training done!")
         (Path(result.experiment_path) / "best_checkpoint").mkdir(exist_ok=True, parents=True)
 
+        # Save the best checkpoint from the new training session
         res = result.get_best_result(metric="episode_reward_mean", mode="max")
         res.get_best_checkpoint(metric="episode_reward_mean", mode="max").to_directory(
             result.experiment_path + "/best_checkpoint"
